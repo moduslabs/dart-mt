@@ -15,7 +15,7 @@ class ProjectOptions {
     }
   }
 
-  bool get type {
+  String get type {
     return _yaml['type'];
   }
 

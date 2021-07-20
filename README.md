@@ -14,6 +14,26 @@
 
 # Getting Started
 
+## Installation
+
+### Global installation
+To install the mt command:
+
+```
+# pub global activate mt
+```
+
+### GitHub Repository
+Create a fork, and clone your fork to your workstation.
+
+Then do `pub get` to install the dependencies.
+
+To execute the program, `dart run bin/mt.dart`.
+
+To install mt globally during development, you can use ``dart run bin/mt.dart install``.
+
+## Overview
+
 The biggest reason to use monorepos for Dart projects is to share (common) custom packages between the programs also in the monorepo.
 
 There is an obvious need for a command line tool (or tools in the IDE) to work with monorepos. The mt tool is meant to make managing monorepos easy. For example, mt can (recursively) run pub get on any package directory containing a pubspec.yaml file.
@@ -72,11 +92,12 @@ See https://pub.dev/documentation/pub_api_client/latest/
 
 
 ## Prerequisites
-Docker is used by the RoboDomo samples.
+Dart SDK 2.x (developed with at least 2.13.4).
 
 ## Contributing
 
 PRs welcome.  Fork this repository, create a branch to do your work, and when ready, make a PR from your branch.
+
 
 # Modus Create
 
