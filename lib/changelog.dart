@@ -1,5 +1,7 @@
 import 'dart:io';
 import 'package:version/version.dart';
+import 'package:mt/editable_file.dart';
+import 'package:mt/console.dart';
 
 ///
 /// private class used by Changelog to represent a version title and message (in markdown)
@@ -24,36 +26,37 @@ class ChangeEntry {
 ///
 /// Once loaded, a CHANGELOG can be modified and written to a file.
 ///
-class Changelog {
+class Changelog extends EditableFile {
   late final _path;
   late final _filename;
-  var _lines;
-  final _prelude = [];
+  late final _dryRun;
+  late final _verbose;
+  final _now = DateTime.now();
+
+//  final List<String> _head = [];
   final _changes = [];
+
+  static String nowFormatted() {
+    var d = DateTime.now();
+    return '${d.month}/${d.day}/${d.year}';
+  }
 
   ///
   /// Constructor
   ///
   /// Open the CHANGELOG.md file and read it in as lines.  Or create the lines if the file doesn't exist.
   ///
-  Changelog(String path) {
+  Changelog(String path, bool dryRun, bool verbose)
+      : super('$path/CHANGELOG.md', [
+          '## 0.0.0 - ${Changelog.nowFormatted}',
+          'Initial version',
+        ]) {
     _path = path;
+    _dryRun = dryRun;
+    _verbose = verbose;
 
-    var lines;
-    _filename = '$path/CHANGELOG.md';
-    File file = File(_filename);
-    if (!file.existsSync() || file.lengthSync() < 1) {
-      var d = DateTime.now();
-      lines = [
-        '## 0.0.0 - ${d.month}/${d.day}/${d.year}',
-        'Initial version',
-      ];
-    } else {
-      lines = file.readAsLinesSync();
-    }
-
-    // Break up lines into "prelude" lines and array of ChangeEntry instances.
-    // The prelude lines are just lines that appear in the .md file before any version declarations.
+    // Break up lines into "head" lines and array of ChangeEntry instances.
+    // The head lines are just lines that appear in the .md file before any version declarations.
     int index = 0;
 
     //
@@ -63,7 +66,7 @@ class Changelog {
         if (line.startsWith('## ')) {
           break;
         }
-        _prelude.add(line);
+        head.add(line);
         index++;
       }
     }
@@ -97,11 +100,11 @@ class Changelog {
 
     // sort _changes by version, newest first
     _changes.sort((a, b) => b.version.compareTo(a.version));
-    lines = [];
+    List<String> newLines = [];
     for (var c in _changes) {
-      lines += c.lines;
+      newLines += c.lines;
     }
-    _lines = lines;
+    lines = newLines;
   }
 
   void addVersion(String version, String message) {
@@ -109,25 +112,29 @@ class Changelog {
     if (message == '') {
       message = 'Bump version';
     }
-    _lines.insert(0, '');
-    _lines.insert(0, '$message');
-    _lines.insert(0, '## $version - ${d.month}/${d.day}/${d.year}');
+    lines.insert(0, '');
+    lines.insert(0, '$message');
+    lines.insert(0, '## $version - ${d.month}/${d.day}/${d.year}');
   }
 
-  void write([String filename = '']) {
-    final f = File(filename == '' ? _filename : filename);
-    if (filename == '' && f.existsSync()) {
-      f.copySync('$_filename.bak');
-    }
-    f.writeAsStringSync(_prelude.join('\n') + _lines.join('\n'));
-  }
+//  void write([String filename = '']) {
+//    final f = File(filename == '' ? _filename : filename);
+//    if (filename == '' && f.existsSync()) {
+//      f.copySync('$_filename.bak');
+//    }
+//    f.writeAsStringSync(_head.join('\n') + _lines.join('\n'));
+//  }
 
-  void dump() {
-    print('================================================================');
-    print('==== $_path/CHANGELOG.md');
-    print('================================================================');
-/*    print('  ' +_prelude.join('\n  '));*/
-    print('  ' + _lines.join('\n  '));
-    print('');
-  }
+//  void dump() {
+//    console.dump('''
+//================================================================
+//================================================================
+//================================================================
+//==== ${_path}/CHANGELOG.md
+//================================================================
+//================================================================
+//================================================================
+//  ${_lines.join('\n  ')}
+//    ''');
+//  }
 }

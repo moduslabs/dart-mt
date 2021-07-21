@@ -1,54 +1,47 @@
 import 'dart:io';
+import 'package:mt/console.dart';
+import 'package:mt/editable_file.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 
-class Pubspec {
-  late final _lines;
+class Pubspec extends EditableFile {
   var _doc;
   var _yaml;
 
   late final _path;
   late final _name;
 
-  Pubspec(String path) {
-    _path = path;
-    _name = p.basename(path);
-
-    File file = File('$path/pubspec.yaml');
-    if (!file.existsSync()) {
-      _lines = [
-        'name: $_name',
-        'version: 0.0.0',
-        'description: >-',
-        '  No description',
-        '#repository: https://github.com/...',
-        '',
-        'environment:',
-        "  sdk: '>=2.12.0 <3.0.0'",
-        '',
-        'dependencies:',
-        '  path: ^1.7.0',
-        '',
-      ];
-    } else {
-      _lines = file.readAsLinesSync();
-    }
-    _yaml = loadYaml(_lines.join('\n')); //  as Map;
+  Pubspec(String path)
+      : super('$path/pubspec.yaml', [
+          'name: ${p.basename(path)}',
+          'version: 0.0.0',
+          'description: >-',
+          '  No description',
+          '#repository: https://github.com/...',
+          '',
+          'environment:',
+          "  sdk: '>=2.12.0 <3.0.0'",
+          '',
+          'dependencies:',
+          '  path: ^1.7.0',
+          '',
+        ]) {
+    _yaml = loadYaml(lines.join('\n')); //  as Map;
     _doc = Map.from(_yaml);
   }
 
   void set version(String ver) {
     _doc['version'] = ver;
-    for (int i = 0; i < _lines.length; i++) {
-      if (_lines[i].startsWith('version:')) {
-        _lines[i] = 'version: $ver';
+    for (int i = 0; i < lines.length; i++) {
+      if (lines[i].startsWith('version:')) {
+        lines[i] = 'version: $ver';
         return;
       }
     }
-    if (_lines.length == 0) {
-      _lines.insert(0, 'version: $ver');
+    if (lines.length == 0) {
+      lines.insert(0, 'version: $ver');
     } else {
-      _lines.insert(1, 'version: $ver');
+      lines.insert(1, 'version: $ver');
     }
   }
 
@@ -72,21 +65,16 @@ class Pubspec {
     return _yaml;
   }
 
-  void dump() {
-    print('================================================================');
-    print('==== pubspec.yaml');
-    print('================================================================');
-    print('  ' + _lines.join('\n  '));
-    print('');
-  }
-
-  void write(String filename) {
-    File file = File(filename);
-    file.writeAsString(_lines.join('\n'));
-  }
+//  void write([String? filename]) {
+//    final fn = filename != null ? filename : _path;
+//    print('pubspec write $fn');
+//    return;
+//    File file = File(fn);
+//    file.writeAsString(lines.join('\n'));
+//  }
 
   @override
   String toString() {
-    return 'pubspec $_path/pubspec.yaml\n$_lines';
+    return 'pubspec $_path/pubspec.yaml\n$lines';
   }
 }

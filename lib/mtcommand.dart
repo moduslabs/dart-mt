@@ -3,6 +3,7 @@ import 'package:mt/mt_yaml.dart';
 
 abstract class MTCommand extends Command {
   late final _mt_yaml = ProjectOptions('.');
+  late final bool dryRun;
 
   ProjectOptions get mt_yaml {
     return _mt_yaml;

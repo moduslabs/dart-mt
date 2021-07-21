@@ -16,8 +16,6 @@ class GetCommand extends MTCommand {
   }
 
   GetCommand() {
-    argParser.addOption('message',
-        abbr: 'm', help: 'Message to add to CHANGELOG and for git commit');
     argParser.addFlag('recurse',
         abbr: 'r',
         defaultsTo: false,
@@ -81,6 +79,7 @@ class GetCommand extends MTCommand {
     return 0;
   }
 
+  @override
   Future<int> run() async {
     dryRun = globalResults?['dry-run'] ?? false;
     verbose = globalResults?['verbose'] ?? false;

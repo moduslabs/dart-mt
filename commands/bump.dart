@@ -1,5 +1,6 @@
 import 'dart:io';
 /*import 'package:yaml/yaml.dart';*/
+import 'package:mt/console.dart';
 import 'package:version/version.dart';
 import 'package:mt/mtcommand.dart';
 import 'package:mt/pubspec_yaml.dart';
@@ -30,22 +31,29 @@ class BumpCommand extends MTCommand {
   }
 
   Future<String> _bumpVersion(String version, String type) async {
-    var newVersion = Version.parse(version);
-    switch (type) {
-      case 'major':
-        newVersion = newVersion.incrementMajor();
-        break;
-      case 'minor':
-        newVersion = newVersion.incrementMinor();
-        break;
-      case 'patch':
-        newVersion = newVersion.incrementPatch();
-        break;
-      case 'prerelease':
-        newVersion = newVersion.incrementPreRelease();
-        break;
+    try {
+      var newVersion = Version.parse(version);
+      switch (type) {
+        case 'major':
+          newVersion = newVersion.incrementMajor();
+          break;
+        case 'minor':
+          newVersion = newVersion.incrementMinor();
+          break;
+        case 'patch':
+          newVersion = newVersion.incrementPatch();
+          break;
+        case 'prerelease':
+          newVersion = newVersion.incrementPreRelease();
+          break;
+      }
+      return newVersion.toString();
+    } catch (e, s) {
+      console.error("*** Fail! $e");
+      console.log('');
+//      print("*** Can't bump version ($version)! (Maybe the version string is not in semver format)");
+      exit(1);
     }
-    return newVersion.toString();
   }
 
   /*
@@ -67,15 +75,27 @@ class BumpCommand extends MTCommand {
 
   @override
   Future<void> run() async {
-    bool dryRun = false;
+    bool verbose = false;
     if (globalResults?["verbose"]) {
-      if (globalResults?['dry-run']) {
-        print("*** Dry Run - no files will be changed\n");
-        dryRun = true;
-      }
-      mt_yaml.dump();
-      print('');
+      verbose = true;
     }
+
+    bool dryRun = false;
+    if (globalResults?['dry-run']) {
+      dryRun = true;
+      console.warn(" *** Note:  Dry Run - no files will be changed");
+      console.warn("");
+    }
+
+    bool fix = false;
+    if (argResults?["fix"]) {
+      fix = true;
+    }
+
+    if (verbose) {
+      mt_yaml.dump();
+    }
+
     final type = argResults?['type'] ?? 'patch';
     var message = argResults?['message'] ?? [];
     if (message.length < 1) {
@@ -94,31 +114,36 @@ class BumpCommand extends MTCommand {
     pubspec.version = newVersion;
 
     // bump version in changelog (add message and version heading)
-    Changelog changelog = Changelog('.');
+    Changelog changelog = Changelog('.', dryRun, verbose);
     changelog.addVersion(newVersion, message);
 
-    if (dryRun) {
+    if (verbose) {
       pubspec.dump();
       print('');
       changelog.dump();
-    } else {
-      pubspec.write('foo');
-      changelog.write('foo2');
     }
-
-    final packages = Packages();
-    packages.updateReferences(pubspec.name, newVersion);
     if (!dryRun) {
-      packages.write();
+      pubspec.write();
+      changelog.write();
     }
 
-    if (dryRun) {
-      print(
-          '\nUpdated ${pubspec.name}:  $type version from $oldVersion to $newVersion (DRY RUN)\n');
-    } else {
-      print(
-          '\nUpdated ${pubspec.name}:  $type version from $oldVersion to $newVersion\n');
+    if (fix) {
+      final packages = Packages(dryRun, verbose);
+      packages.updateReferences(pubspec.name, newVersion);
+      if (!dryRun) {
+        packages.write();
+      }
     }
+
+    console.log('');
+    if (dryRun) {
+      console.success(
+          ' Updated ${pubspec.name}:  $type version from $oldVersion to $newVersion (DRY RUN)');
+    } else {
+      console.success(
+          ' Updated ${pubspec.name}:  $type version from $oldVersion to $newVersion');
+    }
+    console.log('');
     // recurse(rest[0]);
   }
 }

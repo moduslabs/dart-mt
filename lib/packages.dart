@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
+import 'package:mt/console.dart';
 import 'package:mt/pubspec_yaml.dart';
 import 'package:mt/changelog.dart';
 
@@ -8,13 +9,20 @@ class Package {
   late final _changelog;
   late final _packageDir;
   late final _name;
+  late final _dryRun;
+  late final _verbose;
+
+
   bool _modified = false;
 
-  Package(String packageDir) {
+  Package(String packageDir, dryRun, verbose) {
     _packageDir = packageDir;
+    _dryRun = dryRun;
+    _verbose = verbose;
     _name = p.basename(packageDir);
     _pubspec = Pubspec(packageDir);
-    _changelog = Changelog(packageDir);
+
+    _changelog = Changelog(packageDir, _dryRun, _verbose);
     // dump();
   }
 
@@ -43,12 +51,16 @@ class Package {
 
 class Packages {
   late final _packageDir;
+  late final _dryRun;
+  late final _verbose;
+
   final _packages = [];
+
   final List<String> search = [
     './packages', //
     './pkg', //
-    '../packages', //
-    '../pkg'
+//    '../packages', //
+//    '../pkg'
   ];
 
   ///
@@ -83,10 +95,9 @@ class Packages {
         return true;
       }
     }
-    return _locatePackageDir('.', 'pkg') ||
-        _locatePackageDir('.', 'packages') ||
-        _locatePackageDir('..', 'pkg') ||
-        _locatePackageDir('..', 'packages');
+    return _locatePackageDir('.', 'pkg') || _locatePackageDir('.', 'packages');
+//        _locatePackageDir('..', 'pkg') ||
+//        _locatePackageDir('..', 'packages');
   }
 
   bool _findPackages() {
@@ -95,19 +106,26 @@ class Packages {
       final dirList = dir.listSync();
       for (FileSystemEntity f in dirList) {
         if (f is Directory) {
-          _packages.add(Package(f.path));
+          _packages.add(Package(f.path, _dryRun, _verbose));
         }
       }
     } else {
-      print('*** Warning: no package directory');
+      _packageDir = null;
+      console.warn(' *** Warning: no package directory');
     }
     return true;
   }
 
-  Packages() {
+  Packages(bool dryRun, bool verbose) {
+    _dryRun = dryRun;
+    _verbose = verbose;
     // print('Packages Constructor ${Directory.current}');
     _findPackages();
     print('packageDir $_packageDir');
+  }
+
+  bool get empty {
+    return _packages.length < 1;
   }
 
   void updateReferences(String packageName, String version) {
