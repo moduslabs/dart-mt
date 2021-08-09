@@ -8,6 +8,8 @@ import '../commands/bump.dart';
 import '../commands/install.dart';
 import '../commands/get.dart';
 import '../commands/clean.dart';
+import '../commands/root.dart';
+import '../commands/analyze.dart';
 
 main(List<String> args) {
 /*  final mt_yaml = loadYaml(File('mt.yaml').readAsStringSync());*/
@@ -35,6 +37,8 @@ main(List<String> args) {
     ..addCommand(InstallCommand())
     ..addCommand(UninstallCommand())
     ..addCommand(GetCommand())
+    ..addCommand(AnalyzeCommand())
+    ..addCommand(RootCommand())
     ..addCommand(CleanCommand())
     ..argParser.addOption('mode', allowed: ['debug', 'release'], defaultsTo: 'debug')
     ..argParser.addFlag('verbose',
