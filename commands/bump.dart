@@ -48,7 +48,7 @@ class BumpCommand extends MTCommand {
           break;
       }
       return newVersion.toString();
-    } catch (e, s) {
+    } catch (e, _) {
       console.error("*** Fail! $e");
       console.log('');
 //      print("*** Can't bump version ($version)! (Maybe the version string is not in semver format)");

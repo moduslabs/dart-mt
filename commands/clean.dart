@@ -17,7 +17,7 @@ class CleanCommand extends MTCommand {
         abbr: 'r',
         defaultsTo: false,
         help:
-            'Perform pub get recursively from directory down. Defaults to current directory.');
+            'Perform clean recursively from directory down. Defaults to current directory.');
     argParser.addFlag('bak',
         abbr: 'b', defaultsTo: true, help: 'Remove .bak files');
   }

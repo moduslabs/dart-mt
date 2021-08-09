@@ -1,7 +1,7 @@
-import 'dart:io';
+/*import 'dart:io';*/
 import 'package:version/version.dart';
 import 'package:mt/editable_file.dart';
-import 'package:mt/console.dart';
+/*import 'package:mt/console.dart';*/
 
 ///
 /// private class used by Changelog to represent a version title and message (in markdown)
@@ -31,7 +31,6 @@ class Changelog extends EditableFile {
   late final _filename;
   late final _dryRun;
   late final _verbose;
-  final _now = DateTime.now();
 
 //  final List<String> _head = [];
   final _changes = [];
@@ -105,6 +104,10 @@ class Changelog extends EditableFile {
       newLines += c.lines;
     }
     lines = newLines;
+
+    if (_verbose) {
+      print('loaded CHANGELOG $_path');
+    }
   }
 
   void addVersion(String version, String message) {
@@ -117,24 +120,15 @@ class Changelog extends EditableFile {
     lines.insert(0, '## $version - ${d.month}/${d.day}/${d.year}');
   }
 
-//  void write([String filename = '']) {
-//    final f = File(filename == '' ? _filename : filename);
-//    if (filename == '' && f.existsSync()) {
-//      f.copySync('$_filename.bak');
-//    }
-//    f.writeAsStringSync(_head.join('\n') + _lines.join('\n'));
-//  }
-
-//  void dump() {
-//    console.dump('''
-//================================================================
-//================================================================
-//================================================================
-//==== ${_path}/CHANGELOG.md
-//================================================================
-//================================================================
-//================================================================
-//  ${_lines.join('\n  ')}
-//    ''');
-//  }
+  @override
+  void write([String? filename, makeBackup = true]) {
+    if (!_dryRun) {
+      print("changelog write($_filename)");
+      super.write(filename, makeBackup);
+    } else {
+      if (_verbose) {
+        print("dry run: not writing $filename");
+      }
+    }
+  }
 }
