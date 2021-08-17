@@ -1,40 +1,54 @@
+import 'dart:io';
 import 'package:mt/editable_file.dart';
+import 'package:mt/mt_yaml.dart';
+
+//
+// licenses are located in lib/licenses/
+//
+// Some licenses require source files to contain a copyright notice in comments at the top.
+// These are found in lib/licenses/<license>-headers.txt
+//
+// Some licenses require cli programs to print a copyright notice as a banner (first thing printed
+// at program start).  These are found in lib/licenses/<license>-banner.txt.
+//
 
 class License extends EditableFile {
   late final _path;
   late final _filename;
   bool _dryRun = false, _verbose = false;
-  License(String path, bool dryRun, bool verbose)
-      : super('$path/LICENSE', [
-          'MIT License',
-          '',
-          'Copyright (c) 2021 Modus Labs',
-          '',
-          'Permission is hereby granted, free of charge, to any person obtaining a copy',
-          'of this software and associated documentation files (the "Software"), to deal',
-          'in the Software without restriction, including without limitation the rights',
-          'to use, copy, modify, merge, publish, distribute, sublicense, and/or sell',
-          'copies of the Software, and to permit persons to whom the Software is',
-          'furnished to do so, subject to the following conditions:',
-          '',
-          'The above copyright notice and this permission notice shall be included in all',
-          'copies or substantial portions of the Software.',
-          '',
-          'THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR',
-          'IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,',
-          'FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE',
-          'AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER',
-          'LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,',
-          'OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS',
-        ]) {
+
+  // index is SPDX short identifier
+  // see https://opensource.org/licenses
+  final licenseTypes = {
+    "Apache-2.0": 'apache2.txt',
+    "BSD-2-Clause": 'bsd2clause.txt',
+    "BSD-3-Clause": 'bsd3clause.txt',
+    "GPL-2.0": 'gpl2.txt',
+    "GPL-3.0": 'gpl3.txt',
+    "LGPL-2.0": 'gpl2.txt',
+    "LGPL-2.1": 'gpl2.1.txt',
+    "LGPL-3.0": 'gpl3.txt',
+    "MIT": 'mit.txt',
+    "Mozilla-2.0": 'mozilla.txt',
+    "CDDL-1.0": 'cddl.txt',
+    "EPL-2.0": 'eclipse2.txt',
+  };
+
+  License(String path, String type, bool dryRun, bool verbose)
+      : super('$path/LICENSE', []) {
     _path = path;
     _dryRun = dryRun;
     _verbose = verbose;
 
     if (_verbose) {
-      print('loaded CHANGELOG $_path');
+      if (dirty) {
+        print('loaded existing LICENSE $_path/LICENSE');
+      } else {
+        setLicense(type);
+      }
     }
   }
+
   @override
   void write([String? filename, makeBackup = true]) {
     if (!_dryRun) {
@@ -45,5 +59,16 @@ class License extends EditableFile {
         print("dry run: not writing $filename");
       }
     }
+  }
+
+  bool setLicense(String type, [bool override = true]) {
+    if (licenseTypes.containsKey(type)) {
+      final filename = licenseTypes[type];
+      print("$filename");
+      dirty = true;
+      return read('./lib/licenses/$filename');
+    }
+    print('no license file for $type');
+    return false;
   }
 }
