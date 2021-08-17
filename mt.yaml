@@ -1,7 +1,10 @@
 package: mt
+provider: Modus Labs
+copyrightYear: 2021
 entrypoint: bin/mt.dart
-type: "tool"
-production: "compile"
+type: program
+license: MIT
+production: compile
 ignore:
   - .git
   - .dart_tool
