@@ -1,5 +1,5 @@
-import 'dart:io';
-import 'package:mt/console.dart';
+/*import 'dart:io';*/
+/*import 'package:mt/console.dart';*/
 import 'package:mt/editable_file.dart';
 import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
@@ -50,7 +50,7 @@ class Pubspec extends EditableFile {
   }
 
   String get name {
-    return _doc['name'];
+    return _name;
   }
 
   String get description {
