@@ -62,8 +62,7 @@ class AnalyzeCommand extends MTCommand {
     _analyzeDirectory(path);
   }
 
-  @override
-  Future<int> run() async {
+  Future<int> exec() async {
     dryRun = globalResults?['dry-run'] ?? false;
     verbose = globalResults?['verbose'] ?? false;
     recurse = argResults?['recurse'] ?? false;

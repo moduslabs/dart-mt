@@ -80,7 +80,7 @@ class GetCommand extends MTCommand {
   }
 
   @override
-  Future<int> run() async {
+  Future<int> exec() async {
     dryRun = globalResults?['dry-run'] ?? false;
     verbose = globalResults?['verbose'] ?? false;
     recurse = argResults?['recurse'] ?? false;

@@ -74,7 +74,7 @@ class BumpCommand extends MTCommand {
 */
 
   @override
-  Future<void> run() async {
+  Future<void> exec() async {
     bool verbose = false;
     if (globalResults?["verbose"]) {
       verbose = true;

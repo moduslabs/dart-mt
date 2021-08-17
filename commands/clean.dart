@@ -65,7 +65,7 @@ class CleanCommand extends MTCommand {
   }
 
   @override
-  Future<void> run() async {
+  Future<void> exec() async {
     dryRun = globalResults?['dry-run'] ?? false;
     verbose = globalResults?['verbose'] ?? false;
     recurse = argResults?['recurse'] ?? false;

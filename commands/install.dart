@@ -6,10 +6,10 @@ class InstallCommand extends MTCommand {
   final description = 'Install project as program';
 
   @override
-  Future<int> run() async {
+  Future<int> exec() async {
     final command = 'pub';
-    if (mt_yaml.type != 'tool') {
-      print('*** "type"" is not "tool" in mt.yaml');
+    if (mt_yaml.type != 'program') {
+      print('*** "type"" is not "program" in mt.yaml');
       exit(1);
     }
     final process = await Process.start(
@@ -28,10 +28,10 @@ class UninstallCommand extends MTCommand {
   final description = 'Uninstall project as program';
 
   @override
-  Future<int> run() async {
+  Future<int> exec() async {
     final command = 'pub';
-    if (mt_yaml.type != 'tool') {
-      print('*** "type"" is not "tool" in mt.yaml');
+    if (mt_yaml.type != 'program') {
+      print('*** "type"" is not "program" in mt.yaml');
 
     }
 
