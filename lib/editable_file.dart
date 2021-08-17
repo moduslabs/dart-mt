@@ -12,23 +12,44 @@ import 'package:mt/console.dart';
 abstract class EditableFile {
   late final _path;
   late final _name;
+
   /// lines before _lines are _head
-  final List<String> _head =  [];
-  late final List<String> _lines;
+  final List<String> _head = [];
+  List<String> _lines = [];
+
   /// lines after _lines are _tail
-  final List<String> _tail =  [];
+  final List<String> _tail = [];
+  bool _dirty = false;
+
+  bool get dirty {
+    return _dirty;
+  }
+
+  set dirty(bool state) {
+    _dirty = state;
+  }
 
   /// constructor reads file contents into an array of lines
   /// defaultContent is used if file does not exist
   EditableFile(String path, [List<String> defaultContent = const []]) {
     _path = path;
     _name = p.basename(path);
+    _dirty = false;
+    read(path);
+  }
+
+  bool read(String path, [List<String> defaultContent = const []]) {
+  print('read($path)');
     File file = File(path);
     if (file.existsSync()) {
+    print('exists');
       _lines = file.readAsLinesSync();
     } else {
+    print('default');
       _lines = List.from(defaultContent);
+      _dirty = true;
     }
+    return true;
   }
 
   bool get exists {
@@ -44,6 +65,7 @@ abstract class EditableFile {
     _head.clear();
     _head.addAll(newLines);
   }
+
   List<String> get lines {
     return _lines;
   }
