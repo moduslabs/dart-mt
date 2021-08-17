@@ -1,38 +1,15 @@
-/*import 'dart:io';*/
 import 'package:args/command_runner.dart';
-import '../lib/console.dart';
-//import 'package:ansicolor/ansicolor.dart';
-/*import 'package:yaml/yaml.dart';*/
-/*import 'package:mt/mt_yaml.dart';*/
 import '../commands/bump.dart';
+import '../commands/init.dart';
 import '../commands/install.dart';
 import '../commands/get.dart';
 import '../commands/clean.dart';
 import '../commands/root.dart';
 import '../commands/analyze.dart';
 
-main(List<String> args) {
-/*  final mt_yaml = loadYaml(File('mt.yaml').readAsStringSync());*/
-/*  final mt_yaml = ProjectOptions();*/
-/*  print('mt_yaml $mt_yaml');*/
-/*  // print('doc $doc');*/
-
-//  AnsiPen pen = new AnsiPen();
-//  pen
-//      ..reset()
-//      ..white(bg: true, bold: true)
-//      ..white(bold: true)
-//      ;
-  console.bold('');
-  console.bold(' ======================== ');
-  console.bold(' == mt by Modus Create == ');
-  console.bold(' ======================== ');
-  console.bold('');
-//  print('');
-//  print(pen(" mt by Modus Create "));
-//  print('');
-
-  CommandRunner('mt', 'A tool to manage Dart monorepos')
+main(List<String> args) async {
+  final r = CommandRunner('mt', 'A tool to manage Dart monorepos')
+    ..addCommand(InitCommand())
     ..addCommand(BumpCommand())
     ..addCommand(InstallCommand())
     ..addCommand(UninstallCommand())
@@ -40,10 +17,19 @@ main(List<String> args) {
     ..addCommand(AnalyzeCommand())
     ..addCommand(RootCommand())
     ..addCommand(CleanCommand())
-    ..argParser.addOption('mode', allowed: ['debug', 'release'], defaultsTo: 'debug')
+    ..argParser
+        .addOption('mode', allowed: ['debug', 'release'], defaultsTo: 'debug')
     ..argParser.addFlag('verbose',
         abbr: 'v', defaultsTo: false, help: 'Print verbose logging')
     ..argParser.addFlag('dry-run',
         abbr: 'n', defaultsTo: false, help: 'Do not update files')
-    ..run(args);
+    ..argParser
+        .addOption('yes', abbr: 'y', help: 'answer Y(es) to all questions')
+    ..argParser.addFlag('quiet',
+        abbr: 'q',
+        defaultsTo: false,
+        help: 'Hide mt banner (defaults to false)');
+  try {
+    await r.run(args);
+  } on UsageException catch (_) {}
 }
