@@ -26,6 +26,31 @@ class ProjectOptions {
     return _yaml['package'];
   }
 
+  String get license {
+    return _yaml['license'];
+  }
+
+  // provider is copyright holder
+  String get provider {
+    return _yaml['provider'];
+  }
+
+  String get author {
+    return _yaml['author'];
+  }
+
+  String get copyrightYears {
+    var year = _yaml['copyrightYears'];
+    if (year == null) {
+      year = _yaml['copyrightYear'];
+    }
+    if (year != null) {
+      return year;
+    }
+    var d = DateTime.now();
+    return d.year as String;
+  }
+
   List<String> get ignore {
     final list = _yaml['ignore'].value ?? [];
     final List<String> ret = [];
