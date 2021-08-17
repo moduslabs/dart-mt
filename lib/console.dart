@@ -1,6 +1,10 @@
+import 'dart:io';
 import 'package:ansicolor/ansicolor.dart';
 
 class console {
+  //
+  // output
+  //
   static void log(message) {
     AnsiPen pen = new AnsiPen();
     pen.reset();
@@ -19,7 +23,6 @@ class console {
     AnsiPen pen = new AnsiPen();
     pen
       ..reset()
-//      ..white(bg: true, bold: true)
       ..yellow(bold: true);
     print(pen(message));
   }
@@ -50,8 +53,28 @@ class console {
     pen
       ..reset()
       ..white(bg: true, bold: true)
-      ..black(bold: true)
-      ;
+      ..black(bold: true);
     print(pen('\n$message'));
+  }
+
+  //
+  // input
+  //
+  static bool yesOrNo(String? prompt) {
+    if (prompt != null) {
+      stdout.write(prompt);
+    }
+    stdin.lineMode = false;
+    final b = String.fromCharCode(stdin.readByteSync());
+    stdin.lineMode = true;
+    if (b != '\n') {
+      print('');
+    }
+
+    if (b == 'y' || b == 'Y') {
+      return true;
+    } else {
+      return false;
+    }
   }
 }
