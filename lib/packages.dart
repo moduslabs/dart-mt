@@ -26,6 +26,8 @@ class Package {
     // dump();
   }
 
+  Changelog get changelog { return _changelog;  }
+
   void updateReference(String package, String version) {
     print('updateReference package($_name) dependency($package) => $version ');
     _modified = true;
