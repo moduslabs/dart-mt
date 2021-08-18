@@ -146,12 +146,12 @@ class InitCommand extends MTCommand {
     dryRun = globalResults?['dry-run'] ?? false;
     verbose = globalResults?['verbose'] ?? false;
     license = argResults?['license'] ?? 'program';
-    final name = _dir;
 
   mt_yaml.query();
   mt_yaml.dump();
   exit(1);
   /*
+    final name = _dir;
     if (_initialized) {
       if (mt_yaml.license != license) {
         final answer = console.confirm(

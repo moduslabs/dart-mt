@@ -76,8 +76,8 @@ class ProjectOptions {
     _yaml['author'] = v;
   }
 
-  String get copyrightYears {
-    var year = _yaml['copyrightYears'];
+  String get copyrightYear {
+    var year = _yaml['copyrightYear'];
     if (year == null) {
       year = _yaml['copyrightYear'];
     }
@@ -88,8 +88,8 @@ class ProjectOptions {
     return d.year as String;
   }
 
-  set copyrightYears(String v) {
-    _yaml['copyrightYears'] = v;
+  set copyrightYear(String v) {
+    _yaml['copyrightYear'] = v;
   }
 
   List<String> get ignore {
@@ -148,11 +148,11 @@ class ProjectOptions {
       author = answer;
     }
 
-    answer = console.prompt('Copyright year/years: ');
+    answer = console.prompt('Copyright years: ');
     if (answer == null) {
       MTCommand.abort('aborted');
     } else {
-      copyrightYears = answer;
+      copyrightYear = answer;
     }
 
     answer = console
