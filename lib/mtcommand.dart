@@ -15,7 +15,7 @@ abstract class MTCommand extends Command {
 
   Future<void> exec();
 
-  void abort(String? message) {
+  static void abort(String? message) {
     if (message != null) {
       print(message);
     } else {

@@ -1,9 +1,10 @@
 package: mt
-provider: Modus Labs
-copyrightYear: 2021
-entrypoint: bin/mt.dart
 type: program
 license: MIT
+provider: Modus Labs
+author: Mike Schwartz
+copyrightYear: 2021
+entrypoint: bin/mt.dart
 production: compile
 ignore:
   - .git

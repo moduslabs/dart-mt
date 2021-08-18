@@ -19,7 +19,7 @@ class License extends EditableFile {
 
   // index is SPDX short identifier
   // see https://opensource.org/licenses
-  final licenseTypes = {
+  static final licenseTypes = {
     "Apache-2.0": 'apache2.txt',
     "BSD-2-Clause": 'bsd2clause.txt',
     "BSD-3-Clause": 'bsd3clause.txt',

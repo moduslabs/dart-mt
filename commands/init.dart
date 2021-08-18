@@ -70,7 +70,7 @@ class InitCommand extends MTCommand {
     final f = File('pubspec.yaml');
     if (f.existsSync()) {
       final answer =
-          console.yesOrNo('*** pubspec.yaml exists, overwrite it (y/N): ');
+          console.confirm('*** pubspec.yaml exists, overwrite it (y/N): ');
       if (!answer) {
         console.warn('Skipping pubspec.yaml');
         return;
@@ -98,7 +98,7 @@ class InitCommand extends MTCommand {
     final f = File('LICENSE');
     if (f.existsSync()) {
       final answer =
-          console.yesOrNo('*** LICENSE exists, overwrite it (y/N): ');
+          console.confirm('*** LICENSE exists, overwrite it (y/N): ');
       if (!answer) {
         console.warn('  Skipping yaml');
         return;
@@ -109,6 +109,7 @@ class InitCommand extends MTCommand {
     l.dump();
   }
 
+  /// Get optional rest parameter, which is the path where the init process is to be run.
   get _dir {
     if (argResults == null) {
       return '.';
@@ -120,23 +121,24 @@ class InitCommand extends MTCommand {
     return '.';
   }
 
-  bool _exists(String path) {
-    final f = File(path), d = Directory(path);
-    return f.existsSync() || d.existsSync();
-  }
-
+  /// Determine if the directory has already been initialized as a dart project.
   bool get _initialized {
+    bool exists(String path) {
+      final f = File(path), d = Directory(path);
+      return f.existsSync() || d.existsSync();
+    }
+
     if (mt_yaml.type == 'program') {
-      return _exists('mt.yaml') &&
-          _exists('CHANGELOG.md') &&
-          _exists('pubspec.yaml') &&
-          _exists('LICENSE') &&
-          _exists('bin');
+      return exists('mt.yaml') &&
+          exists('CHANGELOG.md') &&
+          exists('pubspec.yaml') &&
+          exists('LICENSE') &&
+          exists('bin');
     } else {
-      return _exists('mt.yaml') &&
-          _exists('CHANGELOG.md') &&
-          _exists('pubspec.yaml') &&
-          _exists('LICENSE');
+      return exists('mt.yaml') &&
+          exists('CHANGELOG.md') &&
+          exists('pubspec.yaml') &&
+          exists('LICENSE');
     }
   }
 
@@ -146,18 +148,22 @@ class InitCommand extends MTCommand {
     license = argResults?['license'] ?? 'program';
     final name = _dir;
 
+  mt_yaml.query();
+  mt_yaml.dump();
+  exit(1);
+  /*
     if (_initialized) {
       if (mt_yaml.license != license) {
-        final answer = console.yesOrNo(
+        final answer = console.confirm(
             '--- new license type ($license) specified (was ${mt_yaml.license}. Overwrite it (y/N): ');
         if (answer) {
           _writeLicense(name);
         }
       }
-      final answer = console.yesOrNo(
+      final answer = console.confirm(
           '--- Looks like this directory is already initialized.  Proceed anyway? (y/N): ');
       if (!answer) {
-        abort('No files modified');
+        MTCommand.abort('No files modified');
       }
     }
     desc = argResults?['description'] ?? '';
@@ -166,14 +172,14 @@ class InitCommand extends MTCommand {
     }
 
     if (desc.length < 1) {
-      print('*** Aborted - no description argument');
-      exit(1);
+      MTCommand.abort('no description argument!');
     }
 
-/*    _writePubspecYaml(name);*/
-    _writeLicense(name);
     if (verbose) {
       print('Initializing directory...');
     }
+//    _writePubspecYaml(name);
+    _writeLicense(name);
+    */
   }
 }
