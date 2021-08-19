@@ -8,8 +8,6 @@ class CleanCommand extends MTCommand {
   final name = 'clean';
   final description = 'Clean .bak files';
 
-  bool verbose = false;
-  bool dryRun = false;
   bool recurse = false;
 
   CleanCommand() {
@@ -27,9 +25,7 @@ class CleanCommand extends MTCommand {
     final ignore = mt_yaml.ignore;
 
     if (ignore.indexOf(base) > -1) {
-      if (verbose) {
-        console.warn(' *** recurse: ignoring $path');
-      }
+      warn(' *** recurse: ignoring $path');
       return false;
     }
 
@@ -42,9 +38,7 @@ class CleanCommand extends MTCommand {
           if (!dryRun) {
             f.deleteSync();
           }
-          if (verbose) {
-            console.success('remove ${f.path}');
-          }
+          success('remove ${f.path}');
         }
       }
     }
@@ -66,11 +60,8 @@ class CleanCommand extends MTCommand {
 
   @override
   Future<void> exec() async {
-    dryRun = globalResults?['dry-run'] ?? false;
-    verbose = globalResults?['verbose'] ?? false;
     recurse = argResults?['recurse'] ?? false;
 
-    final rest = argResults?.rest as List<String>;
     final path = rest.length > 0 ? rest[0] : '.';
 
     if (argResults?["recurse"]) {

@@ -6,12 +6,9 @@ import 'package:mt/mtcommand.dart';
 class GetCommand extends MTCommand {
   final name = 'get';
   final description = 'Run pub get on directory or directories';
-  bool verbose = false;
-  bool dryRun = false;
   bool recurse = false;
 
   cd(path) {
-/*    print('cd $path');*/
     Directory.current = path;
   }
 
@@ -24,7 +21,6 @@ class GetCommand extends MTCommand {
   }
 
   Future<int> pubGet(String path) async {
-/*    print('pub get in ($path)');*/
     final f = File('./pubspec.yaml');
     if (f.existsSync()) {
       print('\n${p.current}');
@@ -39,9 +35,7 @@ class GetCommand extends MTCommand {
 
       return result;
     } else {
-      if (verbose) {
-        print('---> skipping $path - no pubspec.yaml ($f)');
-      }
+      log('---> skipping $path - no pubspec.yaml ($f)');
       return 0;
     }
   }
@@ -54,11 +48,10 @@ class GetCommand extends MTCommand {
 
     // ignore directories in the mt.yaml ignore list
     if (ignore.indexOf(base) > -1) {
-      if (verbose) {
-        print('---> ignoring $path');
-      }
+      log('---> ignoring $path');
       return 0;
     }
+
     for (FileSystemEntity f in dirList) {
       if (f is File) {
         continue;
@@ -81,25 +74,15 @@ class GetCommand extends MTCommand {
 
   @override
   Future<int> exec() async {
-    dryRun = globalResults?['dry-run'] ?? false;
-    verbose = globalResults?['verbose'] ?? false;
     recurse = argResults?['recurse'] ?? false;
 
-    final rest = argResults?.rest as List<String>;
     final dir = rest.length > 0 ? rest[0] : '.';
 
-    if (verbose) {
-      if (dryRun) {
-        print("*** Dry Run - no files will be changed\n");
-        mt_yaml.dump();
-        print('');
-      }
-    }
     if (recurse) {
-      print('Performing pub get recursively, start in $dir');
+      log('Performing pub get recursively, start in $dir');
       return await recurseGet(dir);
     }
-      print('Performing pub get in $dir');
+    log('Performing pub get in $dir');
     return await pubGet(dir);
   }
 }

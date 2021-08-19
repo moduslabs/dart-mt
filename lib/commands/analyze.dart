@@ -1,14 +1,11 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
 import 'package:mt/mtcommand.dart';
-import 'package:mt/console.dart';
 
 class AnalyzeCommand extends MTCommand {
   final name = 'analyze';
   final description = 'Run dart analyze on current project';
 
-  bool verbose = false;
-  bool dryRun = false;
   bool recurse = false;
 
   AnalyzeCommand() {
@@ -24,9 +21,7 @@ class AnalyzeCommand extends MTCommand {
     final ignore = mt_yaml.ignore;
 
     if (ignore.indexOf(base) > -1) {
-      if (verbose) {
-        console.warn(' *** recurse: ignoring $path');
-      }
+      warn(' *** recurse: ignoring $path');
       return false;
     }
 
@@ -40,11 +35,8 @@ class AnalyzeCommand extends MTCommand {
           );
       final result = await process.exitCode;
       return result == 0;
-    }
-    else {
-      if (verbose) {
-      console.warn(' *** recurse: ignoing $path (no pubspec.yaml)');
-      }
+    } else {
+      warn(' *** recurse: ignoing $path (no pubspec.yaml)');
     }
     return true;
   }
@@ -63,11 +55,8 @@ class AnalyzeCommand extends MTCommand {
   }
 
   Future<int> exec() async {
-    dryRun = globalResults?['dry-run'] ?? false;
-    verbose = globalResults?['verbose'] ?? false;
     recurse = argResults?['recurse'] ?? false;
 
-    final rest = argResults?.rest as List<String>;
     final path = rest.length > 0 ? rest[0] : '.';
 
     if (recurse) {
@@ -75,9 +64,6 @@ class AnalyzeCommand extends MTCommand {
     } else {
       _analyzeDirectory(path);
     }
-/*    String result = await Git.root();*/
-/*    print(result);*/
     return 0;
-/*    return result;*/
   }
 }

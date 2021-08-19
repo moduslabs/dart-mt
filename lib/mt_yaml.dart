@@ -1,10 +1,4 @@
-import 'dart:io';
-import 'package:path/path.dart' as p;
-import 'package:yaml/yaml.dart';
-import 'package:mt/console.dart';
-import 'package:mt/mtcommand.dart';
-import 'package:mt/license.dart';
-
+///
 /// mt.yaml is a configuration file for mt, containing hints and other specifications.
 ///
 /// valid fields in mt.yaml:
@@ -19,6 +13,14 @@ import 'package:mt/license.dart';
 /// - production: <steps to perform when building for production - e.g. compile>
 /// - ignore: <array of directories to ignore , such as .git, .dart_tool, etc.>
 ///
+
+import 'dart:io';
+import 'package:path/path.dart' as p;
+import 'package:yaml/yaml.dart';
+import 'package:mt/console.dart';
+import 'package:mt/application.dart';
+import 'package:mt/license.dart';
+
 class ProjectOptions {
   late final _yaml;
   late final _lines;
@@ -108,7 +110,7 @@ class ProjectOptions {
   ///
   /// prompt user for each field, similar to how npm init does.
   ///
-  bool query() {
+  bool query(String? typeArgument) {
     final cwd = Directory.current.path, defaultPackage = p.basename(cwd);
     var answer = console.prompt('package  ($defaultPackage): ');
     if (answer == null) {
@@ -116,41 +118,45 @@ class ProjectOptions {
     }
     package = answer;
 
-    answer = console.select('type: ', [
-      'program',
-      'library',
-      'application',
-    ]);
-    if (answer == null) {
-      MTCommand.abort('invalid answer $answer');
+    if (typeArgument == null) {
+      answer = console.select('type: ', [
+        'program',
+        'library',
+        'application',
+      ]);
+      if (answer == null) {
+        app.abort('invalid answer $answer');
+      } else {
+        type = answer;
+      }
     } else {
-      type = answer;
+      type = typeArgument;
     }
 
     answer = console.select('license: ', License.licenseTypes.keys.toList());
     if (answer == null) {
-      MTCommand.abort('invalid answer $answer');
+      app.abort('invalid answer $answer');
     } else {
       license = answer;
     }
 
     answer = console.prompt('provider/copyright holder: ');
     if (answer == null) {
-      MTCommand.abort('aborted');
+      app.abort('aborted');
     } else {
       provider = answer;
     }
 
     answer = console.prompt('author/authors: ');
     if (answer == null) {
-      MTCommand.abort('aborted');
+      app.abort('aborted');
     } else {
       author = answer;
     }
 
     answer = console.prompt('Copyright years: ');
     if (answer == null) {
-      MTCommand.abort('aborted');
+      app.abort('aborted');
     } else {
       copyrightYear = answer;
     }
@@ -158,7 +164,7 @@ class ProjectOptions {
     answer = console
         .prompt('ignore directories, separated by ":" (.git:.dart_tool): ');
     if (answer == null) {
-      MTCommand.abort('aborted');
+      app.abort('aborted');
     } else if (answer.length > 0) {
       ignore = answer.split(':');
     } else {

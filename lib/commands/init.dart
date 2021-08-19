@@ -1,7 +1,7 @@
 import 'dart:io';
 import 'package:mt/mtcommand.dart';
 import 'package:mt/console.dart';
-import 'package:mt/editor.dart';
+/*import 'package:mt/editor.dart';*/
 import 'package:mt/license.dart';
 
 // create CHANGELOG.md
@@ -27,8 +27,6 @@ class InitCommand extends MTCommand {
   final description = 'Initialize project with necessary skeleton files';
   String invocation = 'init -d description -e executable_name name';
 
-  bool verbose = false;
-  bool dryRun = false;
   String type = 'library';
   String desc = '';
   String executable = '';
@@ -76,9 +74,7 @@ class InitCommand extends MTCommand {
         return;
       }
     }
-    if (verbose) {
-      console.warn('Writing pubspec.yaml');
-    }
+    warn('Writing pubspec.yaml');
     f.writeAsStringSync([
       '#',
       '### pubspec for $name',
@@ -100,7 +96,7 @@ class InitCommand extends MTCommand {
       final answer =
           console.confirm('*** LICENSE exists, overwrite it (y/N): ');
       if (!answer) {
-        console.warn('  Skipping yaml');
+        console.warn('  Skipping LICENSE');
         return;
       }
     }
@@ -114,11 +110,7 @@ class InitCommand extends MTCommand {
     if (argResults == null) {
       return '.';
     }
-    final r = argResults?.rest ?? [];
-    if (r.length > 0) {
-      return r[0];
-    }
-    return '.';
+    return (rest.length > 0) ? rest[0] : '.';
   }
 
   /// Determine if the directory has already been initialized as a dart project.
@@ -143,14 +135,13 @@ class InitCommand extends MTCommand {
   }
 
   Future<void> exec() async {
-    dryRun = globalResults?['dry-run'] ?? false;
-    verbose = globalResults?['verbose'] ?? false;
-    license = argResults?['license'] ?? 'program';
+    license = argResults?['license'] ?? 'MIT';
+    type = argResults?['type'];
 
-  mt_yaml.query();
-  mt_yaml.dump();
-  exit(1);
-  /*
+    mt_yaml.query(type);
+    mt_yaml.dump();
+    exit(1);
+    /*
     final name = _dir;
     if (_initialized) {
       if (mt_yaml.license != license) {
@@ -163,7 +154,7 @@ class InitCommand extends MTCommand {
       final answer = console.confirm(
           '--- Looks like this directory is already initialized.  Proceed anyway? (y/N): ');
       if (!answer) {
-        MTCommand.abort('No files modified');
+        abort('No files modified');
       }
     }
     desc = argResults?['description'] ?? '';
@@ -172,12 +163,10 @@ class InitCommand extends MTCommand {
     }
 
     if (desc.length < 1) {
-      MTCommand.abort('no description argument!');
+      abort('no description argument!');
     }
 
-    if (verbose) {
-      print('Initializing directory...');
-    }
+    log('Initializing directory...');
 //    _writePubspecYaml(name);
     _writeLicense(name);
     */

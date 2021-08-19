@@ -9,9 +9,14 @@ class InstallCommand extends MTCommand {
   Future<int> exec() async {
     final command = 'pub';
     if (mt_yaml.type != 'program') {
-      print('*** "type"" is not "program" in mt.yaml');
+      abort('*** "type"" is not "program" in mt.yaml');
       exit(1);
     }
+    if (dryRun) {
+      log('would execute "pub activate --source path ."');
+      return 0;
+    }
+
     final process = await Process.start(
         '$command', //
         ['global', 'activate', '--source', 'path', '.'], //
@@ -31,8 +36,7 @@ class UninstallCommand extends MTCommand {
   Future<int> exec() async {
     final command = 'pub';
     if (mt_yaml.type != 'program') {
-      print('*** "type"" is not "program" in mt.yaml');
-
+      abort('*** "type"" is not "program" in mt.yaml');
     }
 
     final process = await Process.start(
@@ -41,7 +45,7 @@ class UninstallCommand extends MTCommand {
         mode: ProcessStartMode.inheritStdio, //
         runInShell: true //
         );
-    final result = await process.exitCode;
-    return result;
+
+    return await process.exitCode;
   }
 }
