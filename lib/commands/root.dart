@@ -6,7 +6,7 @@ class RootCommand extends MTCommand {
   final description = 'Print root directory of git repository';
 
   @override
-  Future<String> run() async {
+  Future<String> exec() async {
     String result = await Git.root();
     print(result);
     return result;

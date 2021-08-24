@@ -74,19 +74,7 @@ class BumpCommand extends MTCommand {
 */
 
   @override
-  Future<void> run() async {
-    bool verbose = false;
-    if (globalResults?["verbose"]) {
-      verbose = true;
-    }
-
-    bool dryRun = false;
-    if (globalResults?['dry-run']) {
-      dryRun = true;
-      console.warn(" *** Note:  Dry Run - no files will be changed");
-      console.warn("");
-    }
-
+  Future<void> exec() async {
     bool fix = false;
     if (argResults?["fix"]) {
       fix = true;
@@ -122,6 +110,7 @@ class BumpCommand extends MTCommand {
       print('');
       changelog.dump();
     }
+
     if (!dryRun) {
       pubspec.write();
       changelog.write();
@@ -144,6 +133,5 @@ class BumpCommand extends MTCommand {
           ' Updated ${pubspec.name}:  $type version from $oldVersion to $newVersion');
     }
     console.log('');
-    // recurse(rest[0]);
   }
 }

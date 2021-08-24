@@ -1,6 +1,25 @@
+///
+/// mt.yaml is a configuration file for mt, containing hints and other specifications.
+///
+/// valid fields in mt.yaml:
+///
+/// - package: <name of package> (required)
+/// - type: <type of project - program, library, (flutter) application>
+/// - license: <license for project - SPDC short identifier of LICENSE text>
+/// - provider: <name of company/individual/copyright holder>
+/// - author: <name of programmer(s)>
+/// - copyrightYear: <year or years separated by commas>
+/// - entrypoint: <relative path to main() source file, if type is program>
+/// - production: <steps to perform when building for production - e.g. compile>
+/// - ignore: <array of directories to ignore , such as .git, .dart_tool, etc.>
+///
+
 import 'dart:io';
+import 'package:path/path.dart' as p;
 import 'package:yaml/yaml.dart';
 import 'package:mt/console.dart';
+import 'package:mt/application.dart';
+import 'package:mt/license.dart';
 
 class ProjectOptions {
   late final _yaml;
@@ -11,7 +30,7 @@ class ProjectOptions {
     final f = File('$path/mt.yaml');
     if (f.existsSync()) {
       _lines = f.readAsStringSync();
-      _yaml = loadYaml(_lines);
+      _yaml = Map.from(loadYaml(_lines));
     } else {
       _yaml = {};
       _lines = [];
@@ -22,8 +41,57 @@ class ProjectOptions {
     return _yaml['type'];
   }
 
+  set type(String v) {
+    _yaml['type'] = v;
+  }
+
   String get package {
     return _yaml['package'];
+  }
+
+  set package(String v) {
+    _yaml['package'] = v;
+  }
+
+  String get license {
+    return _yaml['license'];
+  }
+
+  set license(String v) {
+    _yaml['license'] = v;
+  }
+
+  // provider is copyright holder
+  String get provider {
+    return _yaml['provider'];
+  }
+
+  set provider(String v) {
+    _yaml['provider'] = v;
+  }
+
+  String get author {
+    return _yaml['author'];
+  }
+
+  set author(String v) {
+    _yaml['author'] = v;
+  }
+
+  String get copyrightYear {
+    var year = _yaml['copyrightYear'];
+    if (year == null) {
+      year = _yaml['copyrightYear'];
+    }
+    if (year != null) {
+      return year;
+    }
+    var d = DateTime.now();
+    return d.year as String;
+  }
+
+  set copyrightYear(String v) {
+    _yaml['copyrightYear'] = v;
   }
 
   List<String> get ignore {
@@ -33,16 +101,92 @@ class ProjectOptions {
       ret.add(dir);
     }
     return ret;
-/*    return ret as List<String>;*/
+  }
+
+  set ignore(List<String> v) {
+    _yaml['ignore'] = v;
+  }
+
+  ///
+  /// prompt user for each field, similar to how npm init does.
+  ///
+  bool query(String? typeArgument) {
+    final cwd = Directory.current.path, defaultPackage = p.basename(cwd);
+    var answer = console.prompt('package  ($defaultPackage): ');
+    if (answer == null) {
+      answer = defaultPackage;
+    }
+    package = answer;
+
+    if (typeArgument == null) {
+      answer = console.select('type: ', [
+        'program',
+        'library',
+        'application',
+      ]);
+      if (answer == null) {
+        app.abort('invalid answer $answer');
+      } else {
+        type = answer;
+      }
+    } else {
+      type = typeArgument;
+    }
+
+    answer = console.select('license: ', License.licenseTypes.keys.toList());
+    if (answer == null) {
+      app.abort('invalid answer $answer');
+    } else {
+      license = answer;
+    }
+
+    answer = console.prompt('provider/copyright holder: ');
+    if (answer == null) {
+      app.abort('aborted');
+    } else {
+      provider = answer;
+    }
+
+    answer = console.prompt('author/authors: ');
+    if (answer == null) {
+      app.abort('aborted');
+    } else {
+      author = answer;
+    }
+
+    answer = console.prompt('Copyright years: ');
+    if (answer == null) {
+      app.abort('aborted');
+    } else {
+      copyrightYear = answer;
+    }
+
+    answer = console
+        .prompt('ignore directories, separated by ":" (.git:.dart_tool): ');
+    if (answer == null) {
+      app.abort('aborted');
+    } else if (answer.length > 0) {
+      ignore = answer.split(':');
+    } else {
+      ignore = ['.git', '.dart_tool'];
+    }
+
+    return true;
   }
 
   _dump(dynamic yaml, indent, lines) {
     final spaces = indent > 0 ? _spaces.substring(0, indent * 2) : '';
-    for (final key in yaml.keys) {
+
+    print('${yaml.runtimeType}');
+    for (final key in yaml.keys.toList()) {
       final value = yaml[key];
       if (value is String) {
         lines.add('$spaces$key: $value');
+      } else if (value is int) {
+        lines.add('$spaces$key: $value');
       } else if (value is YamlList || value is YamlScalar) {
+        lines.add('$spaces$key: $value');
+      } else if (value is List) {
         lines.add('$spaces$key: $value');
       } else {
         lines.add('$spaces$key:');

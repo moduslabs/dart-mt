@@ -32,7 +32,6 @@ class Changelog extends EditableFile {
   late final _dryRun;
   late final _verbose;
 
-//  final List<String> _head = [];
   final _changes = [];
 
   static String nowFormatted() {
