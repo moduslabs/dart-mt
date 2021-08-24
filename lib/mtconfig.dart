@@ -14,29 +14,35 @@ import 'package:mt/application.dart';
 import 'package:yaml/yaml.dart';
 import 'package:mt/console.dart';
 
-class MTConfig {
+class ConfigFile {
+  final mtconfig = MTConfig.mtconfig;
+
   var _options;
   late final _path;
   bool _dirty = false;
-  final mtconfig = '.mtconfig.yaml';
 
-  MTConfig([global = false]) {
-    if (global) {
-      final homedir = io.Platform.environment['HOME']; // *nix only!
-      _path = '$homedir/$mtconfig';
-    } else {
-      _path = '$mtconfig';
-    }
+  ConfigFile(path) {
+    _path = path;
     read();
   }
 
-  void setOption(k, v) {
+  void setOption(String k, String v) {
     _options[k] = v;
     _dirty = true;
   }
 
-  String? getOption(k) {
+  String? getOption(String k) {
     return _options[k];
+  }
+
+  void removeOption(String k) {
+    if (_options.remove(k) != null) {
+      _dirty = true;
+    }
+  }
+
+  void dump() {
+    _options.forEach((k,v) => print('${_path.padRight(32)} $k = $v'));
   }
 
   ///
@@ -53,7 +59,8 @@ class MTConfig {
       if (app.verbose) {
         print('Loaded existing ~/${mtconfig}.');
       }
-      _options = Map.from(loadYaml(f.readAsStringSync()));
+      final input = f.readAsStringSync();
+      _options = input.length > 0 ? Map.from(loadYaml(input)) : {};
     }
   }
 
@@ -77,8 +84,59 @@ class MTConfig {
       if (app.verbose) {
         console.dump(lines.join('\n'));
       }
+    } else {}
+  }
+}
+
+class MTConfig {
+  static final mtconfig = '.mtconfig.yaml';
+  late final ConfigFile etc;
+  late final ConfigFile home;
+  late final ConfigFile local;
+
+  MTConfig() {
+    final homedir = io.Platform.environment['HOME']; // *nix only!
+
+    etc = ConfigFile('/etc/mtconfig.yaml');
+    home = ConfigFile('$homedir/$mtconfig');
+    local = ConfigFile('$mtconfig');
+  }
+
+  void setOption(String key, String value, [global = true]) {
+    if (global) {
+      home.setOption(key, value);
     } else {
-      
+      local.setOption(key, value);
     }
+  }
+
+  String? getOption(String k) {
+    String? o = local.getOption(k);
+    if (o == null) {
+      o = home.getOption(k);
+    }
+    if (o == null) {
+      o = etc.getOption(k);
+    }
+    return o;
+  }
+
+  void removeOption(String k, bool global) {
+    if (global) {
+      home.removeOption(k);
+    } else {
+      local.removeOption(k);
+    }
+  }
+
+  void write() {
+    local.write();
+    home.write();
+  }
+
+  void dump() {
+    etc.dump();
+    local.dump();
+    home.dump();
   }
 }

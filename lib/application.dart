@@ -23,8 +23,7 @@ class Application {
   late final List<String> rest;
 
   late final List<String> _args;
-  late final MTConfig globalConfig;
-  late final MTConfig localConfig;
+  late final MTConfig mtconfig;
   late final ProjectOptions mt_yaml;
 
   get args {
@@ -35,13 +34,8 @@ class Application {
     return _args.length > index ? _args[index] : defaultValue;
   }
 
-  String? getOption(String key, [global = true]) {
-    if (global) {
-      if (globalConfig.getOption(key) != null) {
-        return globalConfig.getOption(key);
-      }
-      return localConfig.getOption(key);
-    }
+  String? getOption(String key) {
+    return mtconfig.getOption(key);
   }
 
   void abort(String? message) {
@@ -89,14 +83,15 @@ class Application {
     }
   }
 
+  Application() {}
+
   void init(MTCommand c) {
     dryRun = c.globalResults?['dry-run'] ?? false;
     verbose = c.globalResults?['verbose'] ?? false;
     quiet = c.globalResults?["quiet"];
     rest = c.argResults?.rest as List<String>;
 
-    app.globalConfig = MTConfig(true);
-    app.localConfig = MTConfig(true);
+    mtconfig = MTConfig();
     mt_yaml = ProjectOptions('.');
   }
 

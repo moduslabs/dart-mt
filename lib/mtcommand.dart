@@ -30,7 +30,7 @@ abstract class MTCommand extends Command {
   }
 
   String? getArgument(int index) {
-    return  (index < rest.length) ? app.rest[index] : null;
+    return (index < rest.length) ? app.rest[index] : null;
   }
 
   Future<void> exec();
@@ -41,6 +41,16 @@ abstract class MTCommand extends Command {
     } else {
       print('*** Aborting...');
     }
+    exit(1);
+  }
+
+  void invalidUsage(String? message) {
+    if (message != null) {
+      print(message);
+    } else {
+      print('*** Aborting...');
+    }
+    printUsage();
     exit(1);
   }
 
