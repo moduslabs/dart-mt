@@ -29,10 +29,14 @@ abstract class MTCommand extends Command {
     return argResults?[key];
   }
 
+  //
   String? getArgument(int index) {
     return (index < rest.length) ? app.rest[index] : null;
   }
 
+  //
+  // abstract
+  //
   Future<void> exec();
 
   void abort(String? message) {
@@ -99,15 +103,9 @@ abstract class MTCommand extends Command {
     }
     if (app.quiet == false) {
       console.bold('');
-      console.bold(' ======================== ');
-      console.bold(' == mt by Modus Create == ');
-      console.bold(' ======================== ');
+      console.bold('== mt ${app.appVersion} by Modus Create == ');
       console.bold('');
     }
     await exec();
   }
-/*  Future<List<String>> _loadFile(String filename) async {*/
-/*    File file = File(filename);*/
-/*    return await file.readAsLines();*/
-/*  }*/
 }

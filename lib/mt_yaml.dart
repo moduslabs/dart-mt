@@ -6,7 +6,7 @@
 /// - package: <name of package> (required)
 /// - type: <type of project - program, library, (flutter) application>
 /// - license: <license for project - SPDC short identifier of LICENSE text>
-/// - provider: <name of company/individual/copyright holder>
+/// - publisher: <name of company/individual/copyright holder>
 /// - author: <name of programmer(s)>
 /// - copyrightYear: <year or years separated by commas>
 /// - entrypoint: <relative path to main() source file, if type is program>
@@ -61,13 +61,13 @@ class ProjectOptions {
     _yaml['license'] = v;
   }
 
-  // provider is copyright holder
-  String get provider {
-    return _yaml['provider'];
+  // publisher is copyright holder
+  String get publisher {
+    return _yaml['publisher'];
   }
 
-  set provider(String v) {
-    _yaml['provider'] = v;
+  set publisher(String v) {
+    _yaml['publisher'] = v;
   }
 
   String get author {
@@ -107,54 +107,74 @@ class ProjectOptions {
     _yaml['ignore'] = v;
   }
 
-  ///
-  /// prompt user for each field, similar to how npm init does.
-  ///
-  bool query(String? typeArgument) {
-    final cwd = Directory.current.path, defaultPackage = p.basename(cwd);
+  void _queryPackage(defaults) {
+    final cwd = Directory.current.path, //
+        defaultPackage = app.mtconfig.getOption('defaultPackage') ??  p.basename(cwd); //
+
     var answer = console.prompt('package  ($defaultPackage): ');
     if (answer == null) {
-      answer = defaultPackage;
-    }
-    package = answer;
-
-    if (typeArgument == null) {
-      answer = console.select('type: ', [
-        'program',
-        'library',
-        'application',
-      ]);
-      if (answer == null) {
-        app.abort('invalid answer $answer');
-      } else {
-        type = answer;
-      }
+      package = defaultPackage;
     } else {
-      type = typeArgument;
+      package = answer;
     }
+  }
 
-    answer = console.select('license: ', License.licenseTypes.keys.toList());
+  void _queryType(defaults) {
+    var answer = console.select('type: ', [
+      'program',
+      'library',
+      'application',
+    ]);
     if (answer == null) {
-      app.abort('invalid answer $answer');
+      app.abort('*** Invalid answer');
+    } else {
+      type = answer;
+    }
+  }
+
+  void _queryLicense(defaults) {
+    final licenseKeys = License.licenseTypes.keys.toList(),
+        defaultLicenseName = defaults['license'] ?? 'MIT',
+        defaultLicenseNumber = licenseKeys.indexOf(defaultLicenseName);
+
+    var answer = console.select('license: ', licenseKeys,
+        defaultLicenseNumber == -1 ? 0 : defaultLicenseNumber);
+
+    if (answer == null) {
+      app.abort('*** Invalid answer');
     } else {
       license = answer;
     }
+  }
 
-    answer = console.prompt('provider/copyright holder: ');
+  void _queryPublisher(defaults) {
+    var answer = console.prompt('publisher/copyright holder: ');
     if (answer == null) {
       app.abort('aborted');
     } else {
-      provider = answer;
+      publisher = answer;
     }
+  }
 
-    answer = console.prompt('author/authors: ');
+  void _queryAuthor(defaults) {
+    var answer = console.prompt('author/authors: ');
     if (answer == null) {
       app.abort('aborted');
     } else {
       author = answer;
     }
+  }
+  ///
+  /// prompt user for each field, similar to how npm init does.
+  ///
+  bool query(Map<String, dynamic> defaults) {
+    _queryPackage(defaults);
+    _queryType(defaults);
+    _queryLicense(defaults);
+    _queryPublisher(defaults);
+    _queryAuthor(defaults);
 
-    answer = console.prompt('Copyright years: ');
+    var answer = console.prompt('Copyright years: ');
     if (answer == null) {
       app.abort('aborted');
     } else {

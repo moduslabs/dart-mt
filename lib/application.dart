@@ -1,4 +1,7 @@
 import 'dart:io';
+import 'dart:io' show Platform;
+import 'package:path/path.dart' as p;
+import 'package:yaml/yaml.dart';
 import 'package:args/command_runner.dart';
 import 'package:mt/mtconfig.dart';
 import 'package:mt/mtcommand.dart';
@@ -25,6 +28,7 @@ class Application {
   late final List<String> _args;
   late final MTConfig mtconfig;
   late final ProjectOptions mt_yaml;
+  late final String appVersion;
 
   get args {
     return _args;
@@ -40,7 +44,7 @@ class Application {
 
   void abort(String? message) {
     if (message != null) {
-      print(message);
+      console.error(message);
     } else {
       print('*** Aborting...');
     }
@@ -86,6 +90,11 @@ class Application {
   Application() {}
 
   void init(MTCommand c) {
+    final pubspec_path = '${p.dirname(Platform.script.toFilePath())}/../pubspec.yaml';
+    File f = File(pubspec_path);
+    Map pubspec_yaml = loadYaml(f.readAsStringSync());
+    appVersion = pubspec_yaml['version'];
+
     dryRun = c.globalResults?['dry-run'] ?? false;
     verbose = c.globalResults?['verbose'] ?? false;
     quiet = c.globalResults?["quiet"];

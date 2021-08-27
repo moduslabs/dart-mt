@@ -10,6 +10,8 @@
 /// ```
 ///
 import 'dart:io' as io;
+import 'dart:io' show Platform;
+import 'package:path/path.dart' as p;
 import 'package:mt/application.dart';
 import 'package:yaml/yaml.dart';
 import 'package:mt/console.dart';
@@ -24,6 +26,10 @@ class ConfigFile {
   ConfigFile(path) {
     _path = path;
     read();
+  }
+
+  Map<dynamic, dynamic> get options {
+    return _options;
   }
 
   void setOption(String k, String v) {
@@ -99,7 +105,12 @@ class MTConfig {
 
     etc = ConfigFile('/etc/mtconfig.yaml');
     home = ConfigFile('$homedir/$mtconfig');
-    local = ConfigFile('$mtconfig');
+    final local_path = '${p.dirname(Platform.script.toFilePath())}/../$mtconfig';
+    local = ConfigFile(local_path);
+  }
+
+  Map<String, dynamic> get options {
+    return { ...etc.options, ...home.options, ...local.options };
   }
 
   void setOption(String key, String value, [global = true]) {

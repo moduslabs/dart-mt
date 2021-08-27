@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:mt/application.dart';
 import 'package:mt/mtcommand.dart';
 import 'package:mt/console.dart';
 /*import 'package:mt/editor.dart';*/
@@ -34,7 +35,7 @@ class InitCommand extends MTCommand {
 
   InitCommand() {
     argParser.addOption('description',
-        abbr: 'd', help: 'Description (required)');
+        abbr: 'd', help: 'Description of project');
     argParser.addOption('executable',
         abbr: 'e', help: 'Name of executable - use with pub global activate');
     argParser.addOption('license',
@@ -138,7 +139,11 @@ class InitCommand extends MTCommand {
     license = argResults?['license'] ?? 'MIT';
     type = argResults?['type'];
 
-    mt_yaml.query(type);
+    final options = app.mtconfig.options;
+    if (type != null) {
+      options['type'] = type;
+    }
+    mt_yaml.query(options);
     mt_yaml.dump();
     exit(1);
     /*

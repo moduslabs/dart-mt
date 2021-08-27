@@ -112,15 +112,24 @@ class console {
     for (var i = 0; i < count; i++) {
       print(' ${i + 1} ${options[i]}');
     }
-    String? answer = console.prompt('Select option (1-$count): ');
+    String? answer =
+        console.prompt('Select option 1-$count (${defaultValue + 1}): ');
     if (answer == null) {
       print('');
       print('');
       exit(1);
     }
 
-    final choice = answer.length > 0 ? int.parse(answer) : 0;
+    var choice;
+    try {
+      choice = answer == ''
+          ? (defaultValue + 1)
+          : (answer.length > 0 ? int.parse(answer) : 0);
+    } on FormatException {
+      return null;
+    }
     if (choice < 1 || choice > options.length) {
+      choice = defaultValue + 1;
       clear(options[defaultValue]);
       return options[defaultValue];
     }
