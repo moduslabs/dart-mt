@@ -6,212 +6,255 @@
 /// - package: <name of package> (required)
 /// - type: <type of project - program, library, (flutter) application>
 /// - license: <license for project - SPDC short identifier of LICENSE text>
-/// - provider: <name of company/individual/copyright holder>
+/// - publisher: <name of company/individual/copyright holder>
 /// - author: <name of programmer(s)>
 /// - copyrightYear: <year or years separated by commas>
 /// - entrypoint: <relative path to main() source file, if type is program>
-/// - production: <steps to perform when building for production - e.g. compile>
-/// - ignore: <array of directories to ignore , such as .git, .dart_tool, etc.>
+/// - production: <steps to perform when building for production - e.g. compile, publish, nothing...>.
+/// - ignore: <array of directories to ignore , such as .git, .dart_tool, etc.>.
 ///
 
 import 'dart:io';
 import 'package:path/path.dart' as p;
-import 'package:yaml/yaml.dart';
 import 'package:mt/console.dart';
 import 'package:mt/application.dart';
+import 'package:mt/yaml_file.dart';
 import 'package:mt/license.dart';
+import 'package:mt/editor.dart';
 
-class ProjectOptions {
-  late final _yaml;
-  late final _lines;
-  final _spaces = '                                  ';
+class ProjectOptions extends YamlFile {
+  ProjectOptions([path = '.']) : super(path, 'mt.yaml') {}
 
-  ProjectOptions([path = '.']) {
-    final f = File('$path/mt.yaml');
-    if (f.existsSync()) {
-      _lines = f.readAsStringSync();
-      _yaml = Map.from(loadYaml(_lines));
+  ///
+  /// Getters and setters
+  ///
+  List<String> get keys {
+    // list of "members" of ProjectOptions instance
+    return [
+      'name',
+      'description',
+      'type',
+      'license',
+      'publisher',
+      'author',
+      'copyrightYear',
+      'entrypoint',
+      'production',
+      'ignore'
+    ];
+  }
+
+  ///
+  /// Private methods to query for individual field values
+  ///
+
+  void _queryName(defaults) {
+    final prompt = defaults['type'] == 'monorepo' ? 'repo name' : 'name';
+    var defaultPackage = defaults['name'];
+    if (defaultPackage == null) {
+      final cwd = Directory.current.path; //
+      defaultPackage =
+          app.mtconfig.getOption('defaultPackage') ?? p.basename(cwd); //
+    }
+
+    var answer = console.prompt('$prompt ($defaultPackage): ');
+    if (answer == null) {
+      app.abort('*** Aborting');
+    } else if (answer == '') {
+      setValue('name', defaultPackage);
     } else {
-      _yaml = {};
-      _lines = [];
+      setValue('name', answer);
+    }
+    console.clear(-1, '$prompt: ', getValue('name'));
+  }
+
+  //
+  //
+  //
+  Future<void> _queryDescription(defaults) async {
+    var defaultDesc = defaults['description'] ?? '';
+    var desc = defaultDesc == '' ? getValue('description') : defaultDesc;
+
+    if (desc.length > 0) {
+      desc = desc.split('\n') ?? [];
+    }
+
+    if (defaultDesc.length < 1) {
+      desc = await Editor(
+              defaultText: desc == '' ? 'Enter description' : desc.join('\n'))
+          .edit();
+    }
+
+    if (desc.length < 1) {
+      app.abort('*** No description argument!');
+    }
+    desc = desc.join('\n  ');
+    console.clear(-2, 'description: |\n', '  $desc');
+    setValue('description', '|\n  $desc');
+  }
+
+  void _queryType(defaults) {
+    if (defaults['type'] == 'monorepo') {
+      setValue('type', 'monorepo');
+      return;
+    }
+
+    final types = ['monorepo', 'program', 'library', 'application'],
+        defaultTypeName = defaults['type'] ?? 'monorepo',
+        defaultTypeNumber = types.indexOf(defaultTypeName);
+    String? answer = console.select('type: ', types, defaultTypeNumber);
+    if (answer == null) {
+      app.abort('*** Aborting');
+    } else {
+      setValue('type', answer);
     }
   }
 
-  String get type {
-    return _yaml['type'];
-  }
+  void _queryLicense(defaults) {
+    final licenseKeys = License.licenseTypes.keys.toList(),
+        defaultLicenseName = defaults['license'] ?? 'MIT',
+        defaultLicenseNumber = licenseKeys.indexOf(defaultLicenseName);
 
-  set type(String v) {
-    _yaml['type'] = v;
-  }
+    var answer = console.select('license: ', licenseKeys,
+        defaultLicenseNumber == -1 ? 0 : defaultLicenseNumber);
 
-  String get package {
-    return _yaml['package'];
-  }
-
-  set package(String v) {
-    _yaml['package'] = v;
-  }
-
-  String get license {
-    return _yaml['license'];
-  }
-
-  set license(String v) {
-    _yaml['license'] = v;
-  }
-
-  // provider is copyright holder
-  String get provider {
-    return _yaml['provider'];
-  }
-
-  set provider(String v) {
-    _yaml['provider'] = v;
-  }
-
-  String get author {
-    return _yaml['author'];
-  }
-
-  set author(String v) {
-    _yaml['author'] = v;
-  }
-
-  String get copyrightYear {
-    var year = _yaml['copyrightYear'];
-    if (year == null) {
-      year = _yaml['copyrightYear'];
+    if (answer == null) {
+      app.abort('*** Aborting');
+    } else {
+      setValue('license', answer);
     }
-    if (year != null) {
-      return year;
+  }
+
+  void _queryPublisher(defaults) {
+    final defaultValue = defaults["publisher"],
+        printable = defaultValue != null ? ' ($defaultValue)' : '';
+
+    final answer = console.prompt('publisher/copyright holder$printable: ');
+
+    if (answer == null || (answer == '' && defaultValue == '')) {
+      app.abort(
+          '*** Aborting because  publisher is required.  Try `mt config publisher <name of publisher>` to set it permanently.');
     }
+
+    setValue('publisher', answer == '' ? defaultValue : answer);
+    console.clear(-1, 'publisher/copyright holder: ', getValue('publisher'));
+  }
+
+  void _queryAuthor(defaults) {
+    final defaultValue = defaults["author"],
+        printable = defaultValue != null ? ' ($defaultValue)' : '';
+    var answer = console.prompt('author/authors$printable: ');
+    if (answer == null) {
+      app.abort('*** Aborting');
+    } else if (answer == '') {
+      setValue('author', defaultValue);
+    } else {
+      setValue('author', answer);
+    }
+    console.clear(-1, 'author/authors: ', getValue('author'));
+  }
+
+  void _queryCopyrightYears(defaults) {
     var d = DateTime.now();
-    return d.year as String;
-  }
-
-  set copyrightYear(String v) {
-    _yaml['copyrightYear'] = v;
-  }
-
-  List<String> get ignore {
-    final list = _yaml['ignore'].value ?? [];
-    final List<String> ret = [];
-    for (final dir in list) {
-      ret.add(dir);
+    final defaultValue = defaults["copyrightYear"] ?? d.year,
+        printable = defaultValue != null ? ' ($defaultValue)' : '';
+    var answer = console.prompt('Copyright years$printable: ');
+    if (answer == null) {
+      app.abort('*** Aborting');
+    } else if (answer == '') {
+      setValue('copyrightYear', '$defaultValue');
+    } else {
+      setValue('copyrightYear', answer);
     }
-    return ret;
+    console.clear(-1, 'copyright years: ', getValue('copyrightYear'));
   }
 
-  set ignore(List<String> v) {
-    _yaml['ignore'] = v;
+  void _queryEntrypoint(defaults) {
+    List<String> choices = [];
+    var defaultValue = defaults["entrypoint"];
+    if (defaultValue == null) {
+      var d = Directory('bin');
+      if (d.existsSync()) {
+        for (var entity in d.listSync()) {
+          if (p.extension(entity.path) == '.dart') {
+            choices.add(entity.path);
+          }
+        }
+      }
+    }
+
+    var answer;
+    if (choices.length == 1) {
+      defaultValue = choices[0];
+    } else if (choices.length == 0 && defaultValue == null) {
+      defaultValue = 'bin/${getValue("package")}';
+    }
+    final printable = defaultValue != null ? ' ($defaultValue)' : '';
+    if (choices.length > 1) {
+      answer = console.select('entrypoint: ', choices);
+    } else {
+      answer = console.prompt('entrypoint$printable: ');
+      choices = [];
+    }
+
+    if (answer == null) {
+      app.abort('*** Aborting');
+    } else if (answer == '') {
+      setValue('entrypoint', defaultValue);
+    } else {
+      setValue('entrypoint', answer);
+    }
+    console.clear(choices.length - 1, 'entrypoint: ', getValue('entrypoint'));
+  }
+
+  void _queryProduction(defaults) {
+    final productionKeys = ['compile', 'publish', 'nothing'],
+        defaultproductionName = defaults['production'] ?? 'nothing',
+        defaultproductionNumber = productionKeys.indexOf(defaultproductionName);
+
+    var answer = console.select('production: ', productionKeys,
+        defaultproductionNumber == -1 ? 0 : defaultproductionNumber);
+
+    if (answer == null) {
+      app.abort('*** Invalid answer');
+    } else {
+      setValue('production', answer);
+    }
+  }
+
+  void _queryIgnore(defaults) {
+    final defaultValue = defaults["ignore"] ?? '.git:.dart_tool';
+
+    final answer = console
+        .prompt('ignore directories, separated by ":" ($defaultValue): ');
+
+    if (answer == null) {
+      app.abort('aborted');
+    } else if (answer.length > 0) {
+      setValue('ignore', answer.split(':'));
+    } else {
+      setValue('ignore', ['.git', '.dart_tool']);
+    }
+    console.clear(-1, 'ignore directories: ', getValue('ignore').join(':'));
   }
 
   ///
   /// prompt user for each field, similar to how npm init does.
   ///
-  bool query(String? typeArgument) {
-    final cwd = Directory.current.path, defaultPackage = p.basename(cwd);
-    var answer = console.prompt('package  ($defaultPackage): ');
-    if (answer == null) {
-      answer = defaultPackage;
+  Future<bool> query(Map<String, dynamic> defaults) async {
+    _queryName(defaults);
+    await _queryDescription(defaults);
+    _queryType(defaults);
+    _queryLicense(defaults);
+    _queryPublisher(defaults);
+    _queryAuthor(defaults);
+    _queryCopyrightYears(defaults);
+    if (getValue('type') != 'monorepo') {
+      _queryEntrypoint(defaults);
+      _queryProduction(defaults);
     }
-    package = answer;
-
-    if (typeArgument == null) {
-      answer = console.select('type: ', [
-        'program',
-        'library',
-        'application',
-      ]);
-      if (answer == null) {
-        app.abort('invalid answer $answer');
-      } else {
-        type = answer;
-      }
-    } else {
-      type = typeArgument;
-    }
-
-    answer = console.select('license: ', License.licenseTypes.keys.toList());
-    if (answer == null) {
-      app.abort('invalid answer $answer');
-    } else {
-      license = answer;
-    }
-
-    answer = console.prompt('provider/copyright holder: ');
-    if (answer == null) {
-      app.abort('aborted');
-    } else {
-      provider = answer;
-    }
-
-    answer = console.prompt('author/authors: ');
-    if (answer == null) {
-      app.abort('aborted');
-    } else {
-      author = answer;
-    }
-
-    answer = console.prompt('Copyright years: ');
-    if (answer == null) {
-      app.abort('aborted');
-    } else {
-      copyrightYear = answer;
-    }
-
-    answer = console
-        .prompt('ignore directories, separated by ":" (.git:.dart_tool): ');
-    if (answer == null) {
-      app.abort('aborted');
-    } else if (answer.length > 0) {
-      ignore = answer.split(':');
-    } else {
-      ignore = ['.git', '.dart_tool'];
-    }
+    _queryIgnore(defaults);
 
     return true;
-  }
-
-  _dump(dynamic yaml, indent, lines) {
-    final spaces = indent > 0 ? _spaces.substring(0, indent * 2) : '';
-
-    print('${yaml.runtimeType}');
-    for (final key in yaml.keys.toList()) {
-      final value = yaml[key];
-      if (value is String) {
-        lines.add('$spaces$key: $value');
-      } else if (value is int) {
-        lines.add('$spaces$key: $value');
-      } else if (value is YamlList || value is YamlScalar) {
-        lines.add('$spaces$key: $value');
-      } else if (value is List) {
-        lines.add('$spaces$key: $value');
-      } else {
-        lines.add('$spaces$key:');
-        _dump(value, indent + 1, lines);
-      }
-    }
-  }
-
-  dump({dynamic yaml = false, indent = 1}) {
-    if (yaml == false) {
-      yaml = _yaml;
-    }
-
-    final lines = [];
-    _dump(yaml, indent, lines);
-
-    console.dump('''
-================================================================
-================================================================
-================================================================
-==== mt.yaml (parsed to object)
-================================================================
-================================================================
-================================================================
-${lines.join('  \n')}
-  ''');
   }
 }

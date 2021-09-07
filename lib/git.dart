@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:convert';
+import 'package:resource_portable/resource.dart';
 
 class Git {
   late final _dryRun;
@@ -48,5 +49,14 @@ class Git {
 
     final result = await process.exitCode;
     return result;
+  }
+
+  ///
+  /// get .gitignore file as lines
+  ///
+  Future<List<String>> gitignore() async {
+    final resource = new Resource('package:mt/assets/gitignore');
+    var s = await resource.readAsString(encoding: utf8);
+    return s.split('\n');
   }
 }

@@ -1,6 +1,9 @@
-import 'dart:io';
+/*import 'dart:io';*/
+import 'dart:convert' show utf8;
+/*import 'package:path/path.dart' as p;*/
 import 'package:mt/editable_file.dart';
-import 'package:mt/mt_yaml.dart';
+import 'package:mt/application.dart';
+import 'package:resource_portable/resource.dart';
 
 //
 // licenses are located in lib/licenses/
@@ -14,7 +17,7 @@ import 'package:mt/mt_yaml.dart';
 
 class License extends EditableFile {
   late final _path;
-  late final _filename;
+/*  late final _filename;*/
   bool _dryRun = false, _verbose = false;
 
   // index is SPDX short identifier
@@ -34,8 +37,7 @@ class License extends EditableFile {
     "EPL-2.0": 'eclipse2.txt',
   };
 
-  License(String path, String type, bool dryRun, bool verbose)
-      : super('$path/LICENSE', []) {
+  License(String path, bool dryRun, bool verbose) : super('$path', []) {
     _path = path;
     _dryRun = dryRun;
     _verbose = verbose;
@@ -43,17 +45,20 @@ class License extends EditableFile {
     if (_verbose) {
       if (dirty) {
         print('loaded existing LICENSE $_path/LICENSE');
-      } else {
-        setLicense(type);
       }
     }
   }
 
   @override
   void write([String? filename, makeBackup = true]) {
+    if (filename == null) {
+      filename = 'LICENSE';
+    }
     if (!_dryRun) {
-      print("LICENCE write($_filename)");
       super.write(filename, makeBackup);
+      if (_verbose) {
+        app.log('wrote $filename');
+      }
     } else {
       if (_verbose) {
         print("dry run: not writing $filename");
@@ -61,12 +66,19 @@ class License extends EditableFile {
     }
   }
 
-  bool setLicense(String type, [bool override = true]) {
+  Future<bool> setLicense(String type, [bool override = true]) async {
     if (licenseTypes.containsKey(type)) {
       final filename = licenseTypes[type];
-      print("$filename");
       dirty = true;
-      return read('./lib/licenses/$filename');
+      final resource = new Resource('package:mt/assets/licenses/$filename');
+      lines.clear();
+      var s = await resource.readAsString(encoding: utf8);
+      s = s.replaceAll('<YEAR>', app.mt_yaml.getValue('copyrightYear'));
+      s = s.replaceAll('<COPYRIGHT HOLDER>', app.mt_yaml.getValue('publisher'));
+      lines.addAll(s.split('\n'));
+      return true;
+
+/*      return ret;*/
     }
     print('no license file for $type');
     return false;

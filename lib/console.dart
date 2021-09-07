@@ -50,10 +50,9 @@ class console {
       return;
     }
     AnsiPen pen = new AnsiPen();
-    pen
-      ..reset()
-      ..white(bg: true, bold: true)
-      ..black(bold: true);
+    pen..reset();
+/*      ..white(bg: true, bold: true)*/
+/*      ..black(bold: true);*/
     print(pen('\n$message'));
   }
 
@@ -66,9 +65,15 @@ class console {
   ///
   /// Optionally print a prompt and wait for ONE character of input in RAW mode (no newline
   ///   required).  Returns true if the character entered is Y (for yes).
-  static bool confirm(String? prompt) {
+  static bool confirm(String? prompt, [bool? defaultAnswer]) {
     if (prompt != null) {
       stdout.write(prompt);
+    }
+
+    if (defaultAnswer != null && defaultAnswer) {
+      print('Y');
+      print('');
+      return true;
     }
     stdin.lineMode = false;
     final b = String.fromCharCode(stdin.readByteSync());
@@ -94,17 +99,17 @@ class console {
     return stdin.readLineSync();
   }
 
+  static void clear(count, prompt, value) {
+    for (int i = 0; i <= count + 1; i++) {
+      stdout.write('\x1B[1A');
+      stdout.write('\x1B[K');
+    }
+    print('$prompt$value');
+  }
+
   static String? select(String? prompt, List<String> options,
       [defaultValue = 0]) {
     final count = options.length;
-
-    void clear(value) {
-      for (int i = 0; i <= count + 1; i++) {
-        stdout.write('\x1B[1A');
-        stdout.write('\x1B[K');
-      }
-      print('$prompt$value');
-    }
 
     if (prompt != null) {
       print(prompt);
@@ -112,19 +117,28 @@ class console {
     for (var i = 0; i < count; i++) {
       print(' ${i + 1} ${options[i]}');
     }
-    String? answer = console.prompt('Select option (1-$count): ');
+    String? answer =
+        console.prompt('Select option 1-$count (${defaultValue + 1}): ');
     if (answer == null) {
       print('');
       print('');
       exit(1);
     }
 
-    final choice = answer.length > 0 ? int.parse(answer) : 0;
+    var choice;
+    try {
+      choice = answer == ''
+          ? (defaultValue + 1)
+          : (answer.length > 0 ? int.parse(answer) : 0);
+    } on FormatException {
+      return null;
+    }
     if (choice < 1 || choice > options.length) {
-      clear(options[defaultValue]);
+      choice = defaultValue + 1;
+      clear(options.length, prompt, options[defaultValue]);
       return options[defaultValue];
     }
-    clear(options[choice - 1]);
+    clear(options.length, prompt, options[choice - 1]);
     return options[choice - 1];
   }
 }

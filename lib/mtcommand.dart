@@ -5,6 +5,9 @@ import 'package:mt/application.dart';
 import 'package:mt/mt_yaml.dart';
 
 abstract class MTCommand extends Command {
+  // Command code may override this to make program silent
+  final bool quiet = false;
+
   ProjectOptions get mt_yaml {
     return app.mt_yaml;
   }
@@ -15,6 +18,10 @@ abstract class MTCommand extends Command {
 
   bool get verbose {
     return app.verbose;
+  }
+
+  bool get yes {
+    return app.yes;
   }
 
   List<String> get rest {
@@ -29,10 +36,14 @@ abstract class MTCommand extends Command {
     return argResults?[key];
   }
 
+  //
   String? getArgument(int index) {
     return (index < rest.length) ? app.rest[index] : null;
   }
 
+  //
+  // abstract
+  //
   Future<void> exec();
 
   void abort(String? message) {
@@ -92,22 +103,21 @@ abstract class MTCommand extends Command {
 
   @override
   Future<void> run() async {
-    app.init(this);
+    await app.init(this);
     if (dryRun) {
       console.warn(" *** Note:  Dry Run - no files will be changed");
       console.warn("");
     }
-    if (app.quiet == false) {
+    if (quiet == false) {
       console.bold('');
-      console.bold(' ======================== ');
-      console.bold(' == mt by Modus Create == ');
-      console.bold(' ======================== ');
+      console.bold('== mt ${app.appVersion} by Modus Create == ');
+      if (app.yes) {
+        console.warn('Answering "yes" to all questions');
+      }
       console.bold('');
+    } else if (app.yes) {
+      console.warn('Answering "yes" to all questions');
     }
     await exec();
   }
-/*  Future<List<String>> _loadFile(String filename) async {*/
-/*    File file = File(filename);*/
-/*    return await file.readAsLines();*/
-/*  }*/
 }
