@@ -2,13 +2,13 @@ import 'dart:io';
 import 'package:mt/application.dart';
 import 'package:mt/mtcommand.dart';
 import 'package:mt/console.dart';
-/*import 'package:mt/editor.dart';*/
 import 'package:mt/license.dart';
 
-// create CHANGELOG.md
+// X (don't) create CHANGELOG.md
+// X (don't) create pubspec.yaml
 // create mt.yaml
-// create pubspec.yaml
 // create LICENSE
+// create .gitignore
 
 // git init?
 // docker files
@@ -25,19 +25,18 @@ import 'package:mt/license.dart';
 
 class InitCommand extends MTCommand {
   final name = 'init';
-  final description = 'Initialize project with necessary skeleton files';
-  String invocation = 'init -d description -e executable_name name';
+  final description = 'Initialize monorepo with necessary skeleton files';
+  String invocation = 'init -d description';
 
-  String type = 'library';
-  String desc = '';
-  String executable = '';
-  String license = 'MIT';
+/*  String desc = '';*/
+/*  String executable = '';*/
+/*  String license = 'MIT';*/
+/*  bool global = false;*/
+/*  bool local = false;*/
 
   InitCommand() {
     argParser.addOption('description',
-        abbr: 'd', help: 'Description of project');
-    argParser.addOption('executable',
-        abbr: 'e', help: 'Name of executable - use with pub global activate');
+        abbr: 'd', help: 'Description of monorepo');
     argParser.addOption('license',
         abbr: 'l',
         allowed: [
@@ -55,55 +54,16 @@ class InitCommand extends MTCommand {
           'EPL-2.0',
         ],
         defaultsTo: 'MIT');
-    argParser.addOption('type',
-        abbr: 't',
-        allowed: [
-          'program', // cli program
-          'library', // package/library
-          'application', // ios and/or android application
-        ],
-        defaultsTo: 'program');
   }
 
-  _writePubspecYaml(String name) {
-    final f = File('pubspec.yaml');
-    if (f.existsSync()) {
-      final answer =
-          console.confirm('*** pubspec.yaml exists, overwrite it (y/N): ');
-      if (!answer) {
-        console.warn('Skipping pubspec.yaml');
-        return;
-      }
-    }
-    warn('Writing pubspec.yaml');
-    f.writeAsStringSync([
-      '#',
-      '### pubspec for $name',
-      '#',
-      '',
-      'version: 0.0.0',
-      'description: >-',
-      '  $desc',
-      '',
-      'environment:',
-      "  sdk: '>=2.12.0 <3.0.0'",
-      '',
-    ].join('\n'));
+  _writeMtYaml([String name = 'mt.yaml']) {
+    mt_yaml.writeYaml(name);
   }
 
-  _writeLicense(String name) {
-    final f = File('LICENSE');
-    if (f.existsSync()) {
-      final answer =
-          console.confirm('*** LICENSE exists, overwrite it (y/N): ');
-      if (!answer) {
-        console.warn('  Skipping LICENSE');
-        return;
-      }
-    }
-    final l = License(name, type, dryRun, verbose);
-    l.setLicense(license);
-    l.dump();
+  Future<void> _writeLicense([String name = 'LICENSE']) async {
+    final l = License(name, dryRun, verbose);
+    await l.setLicense(mt_yaml.getValue('license'));
+    l.write(name);
   }
 
   /// Get optional rest parameter, which is the path where the init process is to be run.
@@ -121,12 +81,13 @@ class InitCommand extends MTCommand {
       return f.existsSync() || d.existsSync();
     }
 
-    if (mt_yaml.type == 'program') {
+    if (mt_yaml.getValue('type') == 'monorepo') {
+      return exists('mt.yaml') && exists('LICENSE');
+    } else if (mt_yaml.getValue('type') == 'program') {
       return exists('mt.yaml') &&
-          exists('CHANGELOG.md') &&
           exists('pubspec.yaml') &&
-          exists('LICENSE') &&
-          exists('bin');
+          exists('CHANGELOG.md') &&
+          exists('LICENSE');
     } else {
       return exists('mt.yaml') &&
           exists('CHANGELOG.md') &&
@@ -136,44 +97,34 @@ class InitCommand extends MTCommand {
   }
 
   Future<void> exec() async {
-    license = argResults?['license'] ?? 'MIT';
-    type = argResults?['type'];
-
     final options = app.mtconfig.options;
-    if (type != null) {
-      options['type'] = type;
-    }
-    mt_yaml.query(options);
-    mt_yaml.dump();
-    exit(1);
-    /*
+    options['type'] = 'monorepo';
+    options['license'] = argResults?['license'] ?? 'MIT';
+    options['description'] = argResults?['description'] ?? '';
+
     final name = _dir;
     if (_initialized) {
-      if (mt_yaml.license != license) {
+      if (mt_yaml.getValue('license') != options['license']) {
         final answer = console.confirm(
-            '--- new license type ($license) specified (was ${mt_yaml.license}. Overwrite it (y/N): ');
-        if (answer) {
-          _writeLicense(name);
+            '--- new license type (${mt_yaml.getValue("license")}) specified (was ${mt_yaml.getValue("license")}.  Overwrite it (y/N): ',
+            yes);
+        if (!answer) {
+          abort('*** will not change license type.');
         }
       }
+
       final answer = console.confirm(
-          '--- Looks like this directory is already initialized.  Proceed anyway? (y/N): ');
+          '--- Looks like this directory is already initialized.  Proceed anyway? (y/N): ',
+          yes);
       if (!answer) {
-        abort('No files modified');
+        abort('*** No files modified');
       }
     }
-    desc = argResults?['description'] ?? '';
-    if (desc.length < 1) {
-      desc = await Editor().edit();
-    }
 
-    if (desc.length < 1) {
-      abort('no description argument!');
-    }
+    await mt_yaml.query(options);
 
     log('Initializing directory...');
-//    _writePubspecYaml(name);
-    _writeLicense(name);
-    */
+    _writeMtYaml();
+    await _writeLicense('$name/LICENSE');
   }
 }

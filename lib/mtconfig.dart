@@ -10,8 +10,7 @@
 /// ```
 ///
 import 'dart:io' as io;
-import 'dart:io' show Platform;
-import 'package:path/path.dart' as p;
+/*import 'package:path/path.dart' as p;*/
 import 'package:mt/application.dart';
 import 'package:yaml/yaml.dart';
 import 'package:mt/console.dart';
@@ -44,6 +43,7 @@ class ConfigFile {
   void removeOption(String k) {
     if (_options.remove(k) != null) {
       _dirty = true;
+      print('_options $_options');
     }
   }
 
@@ -58,12 +58,12 @@ class ConfigFile {
     final f = io.File(_path);
     if (!f.existsSync()) {
       if (app.verbose) {
-        print('~/${mtconfig} does not exist, using defaults.');
+        print('  $_path  does not exist, using defaults.');
       }
       _options = {};
     } else {
       if (app.verbose) {
-        print('Loaded existing ~/${mtconfig}.');
+        print('  Loaded existing $_path.');
       }
       final input = f.readAsStringSync();
       _options = input.length > 0 ? Map.from(loadYaml(input)) : {};
@@ -86,7 +86,7 @@ class ConfigFile {
       }
 
       final f = io.File(_path);
-      f.writeAsStringSync(lines.join('\n'));
+      f.writeAsStringSync('${lines.join("\n")}\n');
       if (app.verbose) {
         console.dump(lines.join('\n'));
       }
@@ -105,7 +105,7 @@ class MTConfig {
 
     etc = ConfigFile('/etc/mtconfig.yaml');
     home = ConfigFile('$homedir/$mtconfig');
-    final local_path = '${p.dirname(Platform.script.toFilePath())}/../$mtconfig';
+    final local_path = '${app.root}/$mtconfig';
     local = ConfigFile(local_path);
   }
 

@@ -44,7 +44,7 @@ class GetCommand extends MTCommand {
     final dir = Directory(path);
     final dirList = dir.listSync();
     final base = p.basename(path);
-    final ignore = mt_yaml.ignore;
+    final ignore = mt_yaml.getValue('ignore');
 
     // ignore directories in the mt.yaml ignore list
     if (ignore.indexOf(base) > -1) {

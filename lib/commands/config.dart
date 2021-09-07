@@ -14,6 +14,7 @@ class ConfigCommand extends MTCommand {
     ' config [--global] key value',
     '',
   ].join('\n');
+  bool quiet = true;
 
   late final MTConfig mtconfig;
   // options
@@ -40,8 +41,6 @@ class ConfigCommand extends MTCommand {
   void _setOption(k, v, global) {
     app.mtconfig.setOption(k, v, global);
   }
-
-  void _removeOption(k, global) {}
 
   void _list() {
     mtconfig.dump();

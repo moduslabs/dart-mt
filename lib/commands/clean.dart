@@ -1,7 +1,5 @@
 import 'dart:io';
 import 'package:path/path.dart' as p;
-
-import 'package:mt/console.dart';
 import 'package:mt/mtcommand.dart';
 
 class CleanCommand extends MTCommand {
@@ -22,7 +20,7 @@ class CleanCommand extends MTCommand {
 
   bool _cleanDirectoryBak(String path) {
     final base = p.basename(path);
-    final ignore = mt_yaml.ignore;
+    final ignore = mt_yaml.getValue('ignore');
 
     if (ignore.indexOf(base) > -1) {
       warn(' *** recurse: ignoring $path');

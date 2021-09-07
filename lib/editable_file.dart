@@ -11,7 +11,7 @@ import 'package:mt/console.dart';
 
 abstract class EditableFile {
   late final _path;
-  late final _name;
+  late final _filename;
 
   /// lines before _lines are _head
   final List<String> _head = [];
@@ -33,19 +33,16 @@ abstract class EditableFile {
   /// defaultContent is used if file does not exist
   EditableFile(String path, [List<String> defaultContent = const []]) {
     _path = path;
-    _name = p.basename(path);
+    _filename = p.basename(path);
     _dirty = false;
     read(path);
   }
 
   bool read(String path, [List<String> defaultContent = const []]) {
-  print('read($path)');
     File file = File(path);
     if (file.existsSync()) {
-    print('exists');
       _lines = file.readAsLinesSync();
     } else {
-    print('default');
       _lines = List.from(defaultContent);
       _dirty = true;
     }
@@ -93,7 +90,7 @@ abstract class EditableFile {
 ================================================================
 ================================================================
 ================================================================
-==== path($_path) name($_name)
+==== path($_path) name($_filename)
 ================================================================ 
 ================================================================
 ================================================================
@@ -103,10 +100,12 @@ abstract class EditableFile {
 
   void backup([String? filename]) {
     final fn = filename != null ? filename : _path, bak = '${fn}.bak';
-    print('EditableFile backup (copy $fn -> $bak)');
+/*    print('EditableFile backup (copy $fn -> $bak)');*/
 
     File file = File(fn);
-    file.copySync(bak);
+    if (file.existsSync()) {
+      file.copySync(bak);
+    }
   }
 
   void write([String? filename, makeBackup = true]) {
@@ -114,7 +113,7 @@ abstract class EditableFile {
     if (makeBackup) {
       backup(fn);
     }
-    print('EditableFile  write $fn');
+/*    print('EditableFile  write $fn');*/
     File file = File(fn);
     file.writeAsString(content.join('\n'));
   }

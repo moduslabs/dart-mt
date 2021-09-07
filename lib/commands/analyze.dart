@@ -18,7 +18,7 @@ class AnalyzeCommand extends MTCommand {
 
   Future<bool> _analyzeDirectory(String path) async {
     final base = p.basename(path);
-    final ignore = mt_yaml.ignore;
+    final ignore = mt_yaml.getValue('ignore');
 
     if (ignore.indexOf(base) > -1) {
       warn(' *** recurse: ignoring $path');

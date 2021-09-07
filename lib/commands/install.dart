@@ -8,7 +8,7 @@ class InstallCommand extends MTCommand {
   @override
   Future<int> exec() async {
     final command = 'pub';
-    if (mt_yaml.type != 'program') {
+    if (mt_yaml.getValue('type') != 'program') {
       abort('*** "type"" is not "program" in mt.yaml');
       exit(1);
     }
@@ -35,13 +35,13 @@ class UninstallCommand extends MTCommand {
   @override
   Future<int> exec() async {
     final command = 'pub';
-    if (mt_yaml.type != 'program') {
+    if (mt_yaml.getValue('type') != 'program') {
       abort('*** "type"" is not "program" in mt.yaml');
     }
 
     final process = await Process.start(
         '$command', //
-        ['global', 'deactivate', mt_yaml.package], //
+        ['global', 'deactivate', mt_yaml.getValue('package')], //
         mode: ProcessStartMode.inheritStdio, //
         runInShell: true //
         );

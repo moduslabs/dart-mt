@@ -8,50 +8,55 @@ import 'dart:io';
 import 'dart:io' show Platform;
 
 class Editor {
-  late final String editor;
-  var tempFilename = '';
+  late final String _editor;
+  String _tempFilename = '';
+  late final String _defaultText;
 
   static int nextFileNumber = 0;
-  Editor([fn = '']) {
+  Editor({fn = '', defaultText = ''}) {
+    _defaultText = defaultText;
     final tmp = Directory.systemTemp.path;
-    while (tempFilename.length < 1) {
+    while (_tempFilename.length < 1) {
       final fn = '$tmp/mt_editor_$nextFileNumber';
       nextFileNumber++;
-      File f = File(tempFilename);
+      File f = File(_tempFilename);
       if (!f.existsSync()) {
-        this.tempFilename = fn;
+        this._tempFilename = fn;
         break;
       }
     }
+    final f = File(_tempFilename);
+    f.writeAsString(_defaultText);
     Map<String, String> env = Platform.environment;
     String? e = env['EDITOR'];
     if (e == null) {
-      print('*** Warning: no editor defined, using vi');
-      editor = '/bin/vi';
+      print('*** Warning: no EDITOR defined, using vi');
+      _editor = '/bin/vi';
     } else {
-      editor = e;
+      _editor = e;
     }
   }
 
-  Future<String> edit() async {
+  Future<List<String>> edit() async {
     final process = await Process.start(
-        '$editor', //
-        [tempFilename], //
+        '$_editor', //
+        [_tempFilename], //
         mode: ProcessStartMode.inheritStdio, //
         runInShell: true //
         );
 
     final result = await process.exitCode;
-    File f = File(tempFilename);
+    File f = File(_tempFilename);
     if (f.existsSync()) {
       if (result == 0) {
-        final res = f.readAsLinesSync();
+        final List<String> res = f.readAsLinesSync();
         f.delete();
-        return res.join('\n');
+        String s =  res.join('\n');
+        return s == _defaultText ? [] : res;
       } else {
         f.delete();
       }
     }
-    return "";
+    return [];
   }
 }
