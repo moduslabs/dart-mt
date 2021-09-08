@@ -1,6 +1,11 @@
 import 'dart:io';
 import 'package:mt/application.dart';
+import 'package:mt/mt_yaml.dart';
+import 'package:mt/license.dart';
 import 'package:mt/mtcommand.dart';
+import 'package:mt/dart.dart';
+import 'package:mt/flutter.dart';
+import 'package:path/path.dart' as p;
 /*import 'package:mt/console.dart';*/
 /*import 'package:mt/editor.dart';*/
 /*import 'package:mt/license.dart';*/
@@ -25,23 +30,18 @@ import 'package:mt/mtcommand.dart';
 
 class AddCommand extends MTCommand {
   final name = 'add';
-  final description = 'Add package/library/program/application repo as part of this monorepo';
-  String invocation = 'add -d description -e executable_name name';
+  final description =
+      'Add package/library/program/application repo as part of this monorepo';
+  String invocation = 'add <directory>';
 
-  String type = 'program';
+  String type = 'application';
   String desc = '';
   String executable = '';
   String license = 'MIT';
-  bool global = false;
-  bool local = false;
 
   AddCommand() {
     argParser.addOption('description',
-        abbr: 'd', help: 'Description of project');
-    argParser.addOption('executable',
-        abbr: 'e', help: 'Name of executable - use with pub global activate');
-    argParser.addFlag('global', help: 'Update global options values');
-    argParser.addFlag('local', help: 'Update local options values');
+        abbr: 'd', help: 'Description of package or program');
     argParser.addOption('license',
         abbr: 'l',
         allowed: [
@@ -59,57 +59,23 @@ class AddCommand extends MTCommand {
           'EPL-2.0',
         ],
         defaultsTo: 'MIT');
+
     argParser.addOption('type',
         abbr: 't',
         allowed: [
-          'monorepo', // a monorepo
           'program', // cli program
           'library', // package/library
-          'application', // ios and/or android application
+          'module', // flutter module
+          'plugin', // flutter plugin
+          'application', // flutter application
         ],
-        defaultsTo: 'monorepo');
+        defaultsTo: 'application');
   }
 
-/*
-  _writePubspecYaml(String name) {
-    final f = File('pubspec.yaml');
-    if (f.existsSync()) {
-      final answer =
-          console.confirm('*** pubspec.yaml exists, overwrite it (y/N): ');
-      if (!answer) {
-        console.warn('Skipping pubspec.yaml');
-        return;
-      }
-    }
-    warn('Writing pubspec.yaml');
-    f.writeAsStringSync([
-      '#',
-      '### pubspec for $name',
-      '#',
-      '',
-      'version: 0.0.0',
-      'description: >-',
-      '  $desc',
-      '',
-      'environment:',
-      "  sdk: '>=2.12.0 <3.0.0'",
-      '',
-    ].join('\n'));
-  }
-
-  _writeLicense(String name) {
-    final f = File('LICENSE');
-    if (f.existsSync()) {
-      final answer =
-          console.confirm('*** LICENSE exists, overwrite it (y/N): ');
-      if (!answer) {
-        console.warn('  Skipping LICENSE');
-        return;
-      }
-    }
+  _writeLicense(String license, String name) async {
     final l = License(name, dryRun, verbose);
-    l.setLicense(license);
-    l.dump();
+    await l.setLicense(license);
+    l.write(name);
   }
 
   /// Get optional rest parameter, which is the path where the init process is to be run.
@@ -140,51 +106,44 @@ class AddCommand extends MTCommand {
           exists('LICENSE');
     }
   }
-*/
+
   Future<void> exec() async {
-    license = argResults?['license'] ?? 'MIT';
-    type = argResults?['type'];
-    global = argResults?['global'];
-    local = argResults?['local'];
-
+    // mt add
+    type = argResults?['type'] ?? 'application';
     final options = app.mtconfig.options;
-/*    if (type != null) {*/
-      options['type'] = type;
-/*    }*/
-    options['local'] = local;
-    options['global'] = global;
 
-    mt_yaml.query(options);
-    mt_yaml.dump();
-    exit(1);
-    /*
-    final name = _dir;
-    if (_initialized) {
-      if (mt_yaml.license != license) {
-        final answer = console.confirm(
-            '--- new license type ($license) specified (was ${mt_yaml.license}. Overwrite it (y/N): ');
-        if (answer) {
-          _writeLicense(name);
-        }
-      }
-      final answer = console.confirm(
-          '--- Looks like this directory is already initialized.  Proceed anyway? (y/N): ');
-      if (!answer) {
-        abort('No files modified');
-      }
-    }
-    desc = argResults?['description'] ?? '';
-    if (desc.length < 1) {
-      desc = await Editor().edit();
-    }
+    options['license'] = argResults?['license'] ?? 'MIT';
+    options['description'] = argResults?['description'] ?? '';
+    options['type'] = type;
+    options['name'] = p.basename(rest[0]);
 
-    if (desc.length < 1) {
-      abort('no description argument!');
+    if (app.rest.length < 1) {
+      printUsage();
+      abort('');
+    }
+    final path = app.rest[0];
+
+    switch (type) {
+      case 'application':
+        await new Flutter(dryRun, verbose).createApplication(path);
+        break;
+      case 'module':
+        await new Flutter(dryRun, verbose).createModule(path);
+        break;
+      case 'package':
+        await new Flutter(dryRun, verbose).createPackage(path);
+        break;
+      case 'plugin':
+        await new Flutter(dryRun, verbose).createPlugin(path);
+        break;
+      case 'program':
+        await new Dart(dryRun, verbose).createProgram(path);
+        break;
     }
 
-    log('Addializing directory...');
-//    _writePubspecYaml(name);
-    _writeLicense(name);
-    */
+    final new_mt_yaml = ProjectOptions(path);
+    await new_mt_yaml.query(options);
+    new_mt_yaml.write('$path/mt.yaml');
+    _writeLicense(new_mt_yaml.getValue('license'), '$path/LICENSE');
   }
 }

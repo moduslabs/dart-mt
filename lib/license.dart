@@ -3,6 +3,7 @@ import 'dart:convert' show utf8;
 /*import 'package:path/path.dart' as p;*/
 import 'package:mt/editable_file.dart';
 import 'package:mt/application.dart';
+import 'package:mt/mt_yaml.dart';
 import 'package:resource_portable/resource.dart';
 
 //
@@ -54,10 +55,11 @@ class License extends EditableFile {
     if (filename == null) {
       filename = 'LICENSE';
     }
+    
     if (!_dryRun) {
       super.write(filename, makeBackup);
       if (_verbose) {
-        app.log('wrote $filename');
+        app.log('  Wrote $filename.');
       }
     } else {
       if (_verbose) {
@@ -66,15 +68,20 @@ class License extends EditableFile {
     }
   }
 
-  Future<bool> setLicense(String type, [bool override = true]) async {
+  Future<bool> setLicense(String type,
+      [ProjectOptions? mt_yaml, bool override = true]) async {
+    if (mt_yaml == null) {
+      mt_yaml = app.mt_yaml;
+    }
     if (licenseTypes.containsKey(type)) {
       final filename = licenseTypes[type];
+
       dirty = true;
       final resource = new Resource('package:mt/assets/licenses/$filename');
       lines.clear();
       var s = await resource.readAsString(encoding: utf8);
-      s = s.replaceAll('<YEAR>', app.mt_yaml.getValue('copyrightYear'));
-      s = s.replaceAll('<COPYRIGHT HOLDER>', app.mt_yaml.getValue('publisher'));
+      s = s.replaceAll('<YEAR>', mt_yaml.getValue('copyrightYear').toString());
+      s = s.replaceAll('<COPYRIGHT HOLDER>', mt_yaml.getValue('publisher'));
       lines.addAll(s.split('\n'));
       return true;
 

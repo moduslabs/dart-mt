@@ -1,5 +1,4 @@
-///
-/// mt.yaml is a configuration file for mt, containing hints and other specifications.
+// mt.yaml is a configuration file for mt, containing hints and other specifications.
 ///
 /// valid fields in mt.yaml:
 ///
@@ -75,7 +74,9 @@ class ProjectOptions extends YamlFile {
     var defaultDesc = defaults['description'] ?? '';
     var desc = defaultDesc == '' ? getValue('description') : defaultDesc;
 
-    if (desc.length > 0) {
+    if (desc == null) {
+      desc = [];
+    } else if (desc.length > 0) {
       desc = desc.split('\n') ?? [];
     }
 
@@ -99,8 +100,8 @@ class ProjectOptions extends YamlFile {
       return;
     }
 
-    final types = ['monorepo', 'program', 'library', 'application'],
-        defaultTypeName = defaults['type'] ?? 'monorepo',
+    final types = ['program', 'library', 'module', 'plugin', 'application'],
+        defaultTypeName = defaults['type'] ?? 'program',
         defaultTypeNumber = types.indexOf(defaultTypeName);
     String? answer = console.select('type: ', types, defaultTypeNumber);
     if (answer == null) {
@@ -242,6 +243,7 @@ class ProjectOptions extends YamlFile {
   /// prompt user for each field, similar to how npm init does.
   ///
   Future<bool> query(Map<String, dynamic> defaults) async {
+  print('\nValues for mt.yaml:\n');
     _queryName(defaults);
     await _queryDescription(defaults);
     _queryType(defaults);
