@@ -2,31 +2,19 @@ import 'dart:io';
 import 'package:mt/application.dart';
 import 'package:mt/mt_yaml.dart';
 import 'package:mt/license.dart';
+import 'package:mt/changelog.dart';
 import 'package:mt/mtcommand.dart';
+import 'package:mt/console.dart';
 import 'package:mt/dart.dart';
 import 'package:mt/flutter.dart';
 import 'package:path/path.dart' as p;
-/*import 'package:mt/console.dart';*/
-/*import 'package:mt/editor.dart';*/
-/*import 'package:mt/license.dart';*/
 
-// create CHANGELOG.md
+// Notes:
 // create mt.yaml
-// create pubspec.yaml
 // create LICENSE
 
 // git init?
 // docker files
-
-// mt.yaml
-// -------
-// package: mt
-// entrypoint: bin/mt.dart
-// type: "program"
-// production: "compile"
-// ignore:
-//   - .git
-//   - .dart_tool
 
 class AddCommand extends MTCommand {
   final name = 'add';
@@ -58,7 +46,7 @@ class AddCommand extends MTCommand {
           'CDDL-1.0',
           'EPL-2.0',
         ],
-        defaultsTo: 'MIT');
+        defaultsTo: null);
 
     argParser.addOption('type',
         abbr: 't',
@@ -87,23 +75,25 @@ class AddCommand extends MTCommand {
   }
 
   /// Determine if the directory has already been initialized as a dart project.
-  bool get _initialized {
+  bool _initialized(String dir, String type) {
+    print('  Checking to see if ${type} ${dir}/ exists...');
     bool exists(String path) {
-      final f = File(path), d = Directory(path);
-      return f.existsSync() || d.existsSync();
+      final f = File('$dir/$path'), d = Directory('$dir/$path');
+      final fe = f.existsSync(), de = d.existsSync();
+      if (verbose && (fe || de)) {
+        print('  ${f.path} exists.');
+      } else {
+        print('  ${f.path} does not exist.');
+      }
+      return fe || de;
     }
 
-    if (mt_yaml.getValue('type') == 'program') {
-      return exists('mt.yaml') &&
-          exists('CHANGELOG.md') &&
-          exists('pubspec.yaml') &&
-          exists('LICENSE') &&
-          exists('bin');
+    if (type == 'program') {
+      return exists('mt.yaml') && exists('pubspec.yaml');
+    } else if (type == 'application') {
+      return exists('mt.yaml') && exists('pubspec.yaml') && exists('lib');
     } else {
-      return exists('mt.yaml') &&
-          exists('CHANGELOG.md') &&
-          exists('pubspec.yaml') &&
-          exists('LICENSE');
+      return exists('mt.yaml') && exists('pubspec.yaml') && exists('LICENSE');
     }
   }
 
@@ -112,7 +102,6 @@ class AddCommand extends MTCommand {
     type = argResults?['type'] ?? 'application';
     final options = app.mtconfig.options;
 
-    options['license'] = argResults?['license'] ?? 'MIT';
     options['description'] = argResults?['description'] ?? '';
     options['type'] = type;
     options['name'] = p.basename(rest[0]);
@@ -122,7 +111,21 @@ class AddCommand extends MTCommand {
       abort('');
     }
     final path = app.rest[0];
+    final new_mt_yaml = ProjectOptions(path);
+    options['license'] = argResults?['license'] ??
+        new_mt_yaml.getValue('license') ??
+        options['license'] ??
+        'MIT';
+    options['path'] = path;
 
+    if (_initialized(path, type)) {
+      final answer = console.confirm(
+          '--- Looks like this directory is already initialized.  Proceed anyway? (y/N): ',
+          yes);
+      if (!answer) {
+        abort('*** No files modified');
+      }
+    }
     switch (type) {
       case 'application':
         await new Flutter(dryRun, verbose).createApplication(path);
@@ -141,9 +144,33 @@ class AddCommand extends MTCommand {
         break;
     }
 
-    final new_mt_yaml = ProjectOptions(path);
-    await new_mt_yaml.query(options);
-    new_mt_yaml.write('$path/mt.yaml');
-    _writeLicense(new_mt_yaml.getValue('license'), '$path/LICENSE');
+    if (new_mt_yaml.dirty ||
+        console.confirm(
+            'mt.yaml exists, do you want to update its values? (y/N): ', yes)) {
+      await new_mt_yaml.query(options);
+      new_mt_yaml.writeYaml('$path/mt.yaml');
+      if (verbose) {
+        print('  Wrote $path/mt.yaml.');
+      }
+    }
+    if (new_mt_yaml.getValue('license') != options['license']) {
+      if (verbose) {
+        print('  Writing new license ${options['license']}');
+      }
+      _writeLicense(new_mt_yaml.getValue('license'), '$path/LICENSE');
+    } else {
+      if (verbose) {
+        print('  LICENSE ${options['license']} unchanged, not writing it.');
+      }
+    }
+    File f = File('$path/CHANGELOG.md');
+    if (!f.existsSync()) {
+      Changelog c = Changelog('$path', dryRun, verbose);
+      c.write();
+    } else {
+      if (verbose) {
+        print('  CHANGELOG.md exists, not writing it');
+      }
+    }
   }
 }
