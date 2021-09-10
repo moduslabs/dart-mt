@@ -28,7 +28,6 @@ class ChangeEntry {
 ///
 class Changelog extends EditableFile {
   late final _path;
-  late final _filename;
   late final _dryRun;
   late final _verbose;
 
@@ -58,54 +57,56 @@ class Changelog extends EditableFile {
     int index = 0;
 
     //
-    if (!lines[0].startsWith('##')) {
+    if (lines.length > 0) {
+      if (!lines[0].startsWith('##')) {
+        while (index < lines.length) {
+          final line = lines[index];
+          if (line.startsWith('## ')) {
+            break;
+          }
+          head.add(line);
+          index++;
+        }
+      }
+
+      // parse the rest of the CHANGELOG into ChangeEntry instances, one per version.
+      List<String> change = [];
+      String version = '';
       while (index < lines.length) {
         final line = lines[index];
         if (line.startsWith('## ')) {
-          break;
+          if (change.length > 0) {
+            _changes.add(ChangeEntry(version, change));
+          }
+          change = [line];
+          final parts = line.split(new RegExp('\\s+'));
+          version = parts[1];
+        } else if (change.length > 0) {
+          change.add(line);
+        } else {
+          change = [line];
+          version = '';
         }
-        head.add(line);
         index++;
       }
-    }
 
-    // parse the rest of the CHANGELOG into ChangeEntry instances, one per version.
-    List<String> change = [];
-    String version = '';
-    while (index < lines.length) {
-      final line = lines[index];
-      if (line.startsWith('## ')) {
-        if (change.length > 0) {
-          _changes.add(ChangeEntry(version, change));
-        }
-        change = [line];
-        final parts = line.split(new RegExp('\\s+'));
-        version = parts[1];
-      } else if (change.length > 0) {
-        change.add(line);
-      } else {
-        change = [line];
-        version = '';
+      // maybe add last change (that wasn't added in the above loop)
+      if (change.length > 0) {
+        change.add('');
+        _changes.add(ChangeEntry(version, change));
       }
-      index++;
-    }
 
-    // maybe add last change (that wasn't added in the above loop)
-    if (change.length > 0) {
-      change.add('');
-      _changes.add(ChangeEntry(version, change));
-    }
+      // sort _changes by version, newest first
+      _changes.sort((a, b) => b.version.compareTo(a.version));
+      List<String> newLines = [];
+      for (var c in _changes) {
+        newLines += c.lines;
+      }
+      lines = newLines;
 
-    // sort _changes by version, newest first
-    _changes.sort((a, b) => b.version.compareTo(a.version));
-    List<String> newLines = [];
-    for (var c in _changes) {
-      newLines += c.lines;
-    }
-    lines = newLines;
-
-    if (_verbose) {
-      print('loaded CHANGELOG $_path');
+      if (_verbose) {
+        print('loaded CHANGELOG $_path');
+      }
     }
   }
 
@@ -120,13 +121,15 @@ class Changelog extends EditableFile {
   }
 
   @override
-  void write([String? filename, makeBackup = true]) {
+  void write([String? fn, makeBackup = true]) {
     if (!_dryRun) {
-      print("changelog write($_filename)");
-      super.write(filename, makeBackup);
+      super.write(fn, makeBackup);
+      if (_verbose) {
+        print("  Wrote changelog ${fn ?? this.path}.");
+      }
     } else {
       if (_verbose) {
-        print("dry run: not writing $filename");
+        print("  Dry run: not writing ${fn ?? this.path}.");
       }
     }
   }

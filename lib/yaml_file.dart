@@ -47,7 +47,6 @@ abstract class YamlFile extends EditableFile {
 
     for (final key in yaml.keys.toList()) {
       final value = yaml[key];
-/*      print('key $key value $value');*/
       if (value is String) {
         lines.add('$spaces$key: $value');
       } else if (value is int) {
@@ -57,7 +56,6 @@ abstract class YamlFile extends EditableFile {
       } else if (value is List) {
         lines.add('$spaces$key: $value');
       } else if (value != null){
-/*      print('$key $value');*/
         lines.add('$spaces$key:');
         _dump(value, indent + 1, lines);
       }
@@ -88,9 +86,9 @@ ${lines.join('  \n')}
   /// Write doc to file specified by fullpath
   ///
   writeYaml(String? fullpath, [backup = true]) {
-/*    dump();*/
     lines.clear();
     _dump(doc, 0, lines);
+    lines.add('');
     write(fullpath ?? '$_path/$_filename', backup);
   }
 }

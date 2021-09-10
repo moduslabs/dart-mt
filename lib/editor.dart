@@ -38,6 +38,7 @@ class Editor {
   }
 
   Future<List<String>> edit() async {
+  print('$_editor $_tempFilename');
     final process = await Process.start(
         '$_editor', //
         [_tempFilename], //
@@ -46,6 +47,7 @@ class Editor {
         );
 
     final result = await process.exitCode;
+
     File f = File(_tempFilename);
     if (f.existsSync()) {
       if (result == 0) {

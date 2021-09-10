@@ -1,5 +1,4 @@
-///
-/// mt.yaml is a configuration file for mt, containing hints and other specifications.
+// mt.yaml is a configuration file for mt, containing hints and other specifications.
 ///
 /// valid fields in mt.yaml:
 ///
@@ -75,7 +74,9 @@ class ProjectOptions extends YamlFile {
     var defaultDesc = defaults['description'] ?? '';
     var desc = defaultDesc == '' ? getValue('description') : defaultDesc;
 
-    if (desc.length > 0) {
+    if (desc == null) {
+      desc = [];
+    } else if (desc.length > 0) {
       desc = desc.split('\n') ?? [];
     }
 
@@ -94,14 +95,20 @@ class ProjectOptions extends YamlFile {
   }
 
   void _queryType(defaults) {
+    if (defaults['type'] != null) {
+      print('type: ${defaults["type"]}');
+      return;
+    }
+
     if (defaults['type'] == 'monorepo') {
       setValue('type', 'monorepo');
       return;
     }
 
-    final types = ['monorepo', 'program', 'library', 'application'],
-        defaultTypeName = defaults['type'] ?? 'monorepo',
+    final types = ['program', 'library', 'module', 'plugin', 'application'],
+        defaultTypeName = defaults['type'] ?? 'program',
         defaultTypeNumber = types.indexOf(defaultTypeName);
+
     String? answer = console.select('type: ', types, defaultTypeNumber);
     if (answer == null) {
       app.abort('*** Aborting');
@@ -111,6 +118,7 @@ class ProjectOptions extends YamlFile {
   }
 
   void _queryLicense(defaults) {
+    print('defaults $defaults');
     final licenseKeys = License.licenseTypes.keys.toList(),
         defaultLicenseName = defaults['license'] ?? 'MIT',
         defaultLicenseNumber = licenseKeys.indexOf(defaultLicenseName);
@@ -170,14 +178,25 @@ class ProjectOptions extends YamlFile {
   }
 
   void _queryEntrypoint(defaults) {
+    final path = defaults['path'];
     List<String> choices = [];
     var defaultValue = defaults["entrypoint"];
+    var d = Directory('$path/bin'), entrypointPath = 'bin';
     if (defaultValue == null) {
-      var d = Directory('bin');
       if (d.existsSync()) {
         for (var entity in d.listSync()) {
           if (p.extension(entity.path) == '.dart') {
-            choices.add(entity.path);
+            choices.add(entity.path.replaceFirst('$path/', ''));
+          }
+        }
+      } else {
+        d = Directory('$path/lib');
+        entrypointPath = 'lib';
+        if (d.existsSync()) {
+          for (var entity in d.listSync()) {
+            if (p.extension(entity.path) == '.dart') {
+              choices.add(entity.path.replaceFirst('$path/', ''));
+            }
           }
         }
       }
@@ -187,7 +206,7 @@ class ProjectOptions extends YamlFile {
     if (choices.length == 1) {
       defaultValue = choices[0];
     } else if (choices.length == 0 && defaultValue == null) {
-      defaultValue = 'bin/${getValue("package")}';
+      defaultValue = '${entrypointPath}/${getValue("package")}';
     }
     final printable = defaultValue != null ? ' ($defaultValue)' : '';
     if (choices.length > 1) {
@@ -242,6 +261,11 @@ class ProjectOptions extends YamlFile {
   /// prompt user for each field, similar to how npm init does.
   ///
   Future<bool> query(Map<String, dynamic> defaults) async {
+  if (!dirty) {
+
+  }
+
+    print('\nValues for mt.yaml:\n');
     _queryName(defaults);
     await _queryDescription(defaults);
     _queryType(defaults);

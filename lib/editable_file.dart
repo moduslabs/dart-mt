@@ -15,10 +15,18 @@ abstract class EditableFile {
 
   /// lines before _lines are _head
   final List<String> _head = [];
-  List<String> _lines = [];
+  final List<String> _lines = [];
 
   /// lines after _lines are _tail
   final List<String> _tail = [];
+
+  String get filename {
+    return _filename;
+  }
+  String get path {
+    return _path;
+  }
+
   bool _dirty = false;
 
   bool get dirty {
@@ -35,15 +43,16 @@ abstract class EditableFile {
     _path = path;
     _filename = p.basename(path);
     _dirty = false;
-    read(path);
+    read(path, defaultContent);
   }
 
   bool read(String path, [List<String> defaultContent = const []]) {
     File file = File(path);
     if (file.existsSync()) {
-      _lines = file.readAsLinesSync();
+      _lines.addAll(file.readAsLinesSync());
     } else {
-      _lines = List.from(defaultContent);
+      print('read not found');
+      _lines.addAll(List.from(defaultContent));
       _dirty = true;
     }
     return true;
