@@ -89,9 +89,9 @@ class ProjectOptions extends YamlFile {
     if (desc.length < 1) {
       app.abort('*** No description argument!');
     }
-    desc = desc.join('\n  ');
-    console.clear(-2, 'description: |\n', '  $desc');
-    setValue('description', '|\n  $desc');
+    final ddesc = desc.join('\n  ');
+    console.clear(-2, 'description: |\n', '  $ddesc');
+    setValue('description', desc);
   }
 
   void _queryType(defaults) {

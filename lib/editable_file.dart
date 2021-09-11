@@ -51,7 +51,6 @@ abstract class EditableFile {
     if (file.existsSync()) {
       _lines.addAll(file.readAsLinesSync());
     } else {
-      print('read not found');
       _lines.addAll(List.from(defaultContent));
       _dirty = true;
     }
@@ -109,7 +108,6 @@ abstract class EditableFile {
 
   void backup([String? filename]) {
     final fn = filename != null ? filename : _path, bak = '${fn}.bak';
-/*    print('EditableFile backup (copy $fn -> $bak)');*/
 
     File file = File(fn);
     if (file.existsSync()) {
@@ -122,7 +120,6 @@ abstract class EditableFile {
     if (makeBackup) {
       backup(fn);
     }
-/*    print('EditableFile  write $fn');*/
     File file = File(fn);
     file.writeAsString(content.join('\n'));
   }

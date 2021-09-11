@@ -3,9 +3,7 @@ import 'package:mt/yaml_file.dart';
 class Pubspec extends YamlFile {
   late final _name;
 
-  Pubspec(String path)
-      : super('$path', 'pubspec.yaml') {
-  }
+  Pubspec(String path) : super('$path', 'pubspec.yaml') {}
 
   List<String> get keys {
     return [
@@ -50,6 +48,27 @@ class Pubspec extends YamlFile {
 
   String get description {
     return doc['description'];
+  }
+
+  bool setDependency(String package, dynamic value) {
+    final dependencies = getValue('dependencies') ?? {};
+    dependencies[package] = value;
+    setValue('dependencies', dependencies);
+    return true;
+  }
+
+  bool hasDependency(String package) {
+    final dependencies = getValue('dependencies');
+    return (dependencies.indexOf(package) > -1);
+  }
+
+  dynamic getDependency(String package) {
+    final dependencies = getValue('dependencies');
+    final index = dependencies.indexOf(package);
+    if (index > -1) {
+      return dependencies[index];
+    }
+    return null;
   }
 
   @override

@@ -4,13 +4,14 @@
 /// A YamlFile is an EditableFile that reads .yaml files and can dump and write as .yaml (not JSON!).
 ///
 
+import 'dart:io';
 import 'package:mt/application.dart';
 import 'package:mt/editable_file.dart';
 import 'package:mt/console.dart';
 import 'package:yaml/yaml.dart';
 
 abstract class YamlFile extends EditableFile {
-  late final doc;
+  late var doc;
   late final _yaml;
 
   late final _path;
@@ -39,6 +40,13 @@ abstract class YamlFile extends EditableFile {
   }
 
   dynamic getValue(String key) {
+    dynamic v = doc[key];
+    if (v is YamlMap) {
+      doc[key] = Map.from(v);
+    } else if (v is YamlList) {
+      doc[key] = List.from(v);
+    }
+
     return doc[key];
   }
 
@@ -47,15 +55,25 @@ abstract class YamlFile extends EditableFile {
 
     for (final key in yaml.keys.toList()) {
       final value = yaml[key];
-      if (value is String) {
+      if (value is bool) {
         lines.add('$spaces$key: $value');
+      } else if (value is String) {
+        if (value.contains('\n')) {
+          final s = value.split('\n');
+          final newValue = s.join('\n  ');
+          lines.add("$spaces$key: |+\n  $newValue\n");
+        } else if (value.contains(' ')) {
+          lines.add("$spaces$key: '$value'");
+        } else {
+          lines.add("$spaces$key: $value");
+        }
       } else if (value is int) {
         lines.add('$spaces$key: $value');
       } else if (value is YamlList || value is YamlScalar) {
         lines.add('$spaces$key: $value');
       } else if (value is List) {
         lines.add('$spaces$key: $value');
-      } else if (value != null){
+      } else if (value != null) {
         lines.add('$spaces$key:');
         _dump(value, indent + 1, lines);
       }
@@ -85,10 +103,12 @@ ${lines.join('  \n')}
   ///
   /// Write doc to file specified by fullpath
   ///
-  writeYaml(String? fullpath, [backup = true]) {
+  writeYaml([String? fullpath, backup = true]) {
     lines.clear();
     _dump(doc, 0, lines);
     lines.add('');
-    write(fullpath ?? '$_path/$_filename', backup);
+    final fn = fullpath ?? '$_path/$_filename';
+    print("writeYaml($fn) ${lines.join('\n')}");
+    write(fn, backup);
   }
 }

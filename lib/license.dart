@@ -81,14 +81,12 @@ class License extends EditableFile {
       lines.clear();
       var s = await resource.readAsString(encoding: utf8);
       s = s.replaceAll('<YEAR>', mt_yaml.getValue('copyrightYear').toString());
-      s = s.replaceAll('<COPYRIGHT HOLDER>', mt_yaml.getValue('publisher'));
-      s = s.replaceAll('<NAME>', mt_yaml.getValue('name'));
-      s = s.replaceAll('<AUTHOR>', mt_yaml.getValue('author'));
+      s = s.replaceAll('<COPYRIGHT HOLDER>', mt_yaml.getValue('publisher') ?? '');
+      s = s.replaceAll('<NAME>', mt_yaml.getValue('name') ?? '');
+      s = s.replaceAll('<AUTHOR>', mt_yaml.getValue('author') ?? '');
       s = s.replaceAll('<DESCRIPTION>', mt_yaml.getValue('description'));
       lines.addAll(s.split('\n'));
       return true;
-
-/*      return ret;*/
     }
     print('no license file for $type');
     return false;

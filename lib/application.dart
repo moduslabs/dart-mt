@@ -18,6 +18,7 @@ import 'package:mt/commands/get.dart';
 import 'package:mt/commands/clean.dart';
 import 'package:mt/commands/root.dart';
 import 'package:mt/commands/analyze.dart';
+import 'package:mt/commands/package.dart';
 
 final Application app = Application();
 
@@ -98,7 +99,8 @@ class Application {
   }
 
   Future<void> init(MTCommand c) async {
-    final pubspec_path = '${p.dirname(Platform.script.toFilePath())}/../pubspec.yaml';
+    final pubspec_path =
+        '${p.dirname(Platform.script.toFilePath())}/../pubspec.yaml';
     File f = File(pubspec_path);
     Map pubspec_yaml = loadYaml(f.readAsStringSync());
     appVersion = pubspec_yaml['version'];
@@ -112,6 +114,9 @@ class Application {
 
     mtconfig = MTConfig();
     mt_yaml = ProjectOptions('.');
+    if (verbose) {
+    print('  initialized application');
+    }
   }
 
   ///
@@ -123,6 +128,7 @@ class Application {
       ..addCommand(ConfigCommand())
       ..addCommand(InitCommand())
       ..addCommand(AddCommand())
+      ..addCommand(PackageCommand())
       ..addCommand(BumpCommand())
       ..addCommand(InstallCommand())
       ..addCommand(UninstallCommand())
@@ -144,6 +150,9 @@ class Application {
           help: 'Hide mt banner (defaults to false)');
     try {
       await r.run(app.args);
-    } on UsageException catch (_) {}
+    } on UsageException catch (e) {
+      console.error('\n*** Usage Error: ${e.message}');
+      console.log('${e.usage}\n');
+    }
   }
 }
