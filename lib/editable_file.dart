@@ -121,6 +121,6 @@ abstract class EditableFile {
       backup(fn);
     }
     File file = File(fn);
-    file.writeAsString(content.join('\n'));
+    file.writeAsStringSync(content.join('\n'));
   }
 }

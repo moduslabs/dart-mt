@@ -62,13 +62,33 @@ class Pubspec extends YamlFile {
     return (dependencies.indexOf(package) > -1);
   }
 
+  int _findKey(Map map, String k) {
+    var index = 0;
+    for (final dep in map.keys.toList()) {
+      if (dep == k) {
+        return index;
+      }
+      index++;
+    }
+    return -1;
+  }
   dynamic getDependency(String package) {
-    final dependencies = getValue('dependencies');
-    final index = dependencies.indexOf(package);
+    final dependencies = getValue('dependencies') ?? {};
+    print('dependencies $dependencies ${dependencies.runtimeType}');
+    final index = _findKey(dependencies, package);
     if (index > -1) {
+      print('index $index');
+      print('$dependencies ${dependencies[index]}');
       return dependencies[index];
     }
     return null;
+  }
+
+  bool removeDependency(String package) {
+    final dependencies = getValue('dependencies') ?? {};
+    dependencies.remove(package);
+    setValue('dependencies', dependencies);
+    return true;
   }
 
   @override

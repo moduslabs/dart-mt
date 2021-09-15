@@ -55,7 +55,7 @@ class License extends EditableFile {
     if (filename == null) {
       filename = 'LICENSE';
     }
-    
+
     if (!_dryRun) {
       super.write(filename, makeBackup);
       if (_verbose) {
@@ -81,10 +81,15 @@ class License extends EditableFile {
       lines.clear();
       var s = await resource.readAsString(encoding: utf8);
       s = s.replaceAll('<YEAR>', mt_yaml.getValue('copyrightYear').toString());
-      s = s.replaceAll('<COPYRIGHT HOLDER>', mt_yaml.getValue('publisher') ?? '');
+      s = s.replaceAll(
+          '<COPYRIGHT HOLDER>', mt_yaml.getValue('publisher') ?? '');
       s = s.replaceAll('<NAME>', mt_yaml.getValue('name') ?? '');
       s = s.replaceAll('<AUTHOR>', mt_yaml.getValue('author') ?? '');
-      s = s.replaceAll('<DESCRIPTION>', mt_yaml.getValue('description'));
+      var desc = mt_yaml.getValue('description');
+      if (desc is List<String>) {
+        desc = desc.join('\n');
+      }
+      s = s.replaceAll('<DESCRIPTION>', desc);
       lines.addAll(s.split('\n'));
       return true;
     }

@@ -4,7 +4,7 @@
 /// A YamlFile is an EditableFile that reads .yaml files and can dump and write as .yaml (not JSON!).
 ///
 
-import 'dart:io';
+import 'dart:collection';
 import 'package:mt/application.dart';
 import 'package:mt/editable_file.dart';
 import 'package:mt/console.dart';
@@ -42,7 +42,7 @@ abstract class YamlFile extends EditableFile {
   dynamic getValue(String key) {
     dynamic v = doc[key];
     if (v is YamlMap) {
-      doc[key] = Map.from(v);
+      doc[key] = Map<String,dynamic>.from(v);
     } else if (v is YamlList) {
       doc[key] = List.from(v);
     }
@@ -50,9 +50,19 @@ abstract class YamlFile extends EditableFile {
     return doc[key];
   }
 
+  void removeValue(key) {
+    doc.remove(key);
+  }
+
   _dump(dynamic yaml, indent, lines) {
     final spaces = indent > 0 ? _spaces.substring(0, indent * 2) : '';
 
+    if (yaml is List) {
+      for (final value in yaml) {
+        lines.add('$spaces$value');
+      }
+      return;
+    }
     for (final key in yaml.keys.toList()) {
       final value = yaml[key];
       if (value is bool) {
@@ -73,9 +83,15 @@ abstract class YamlFile extends EditableFile {
         lines.add('$spaces$key: $value');
       } else if (value is List) {
         lines.add('$spaces$key: $value');
+      } else if (value is YamlMap || value is Map) {
+        lines.add('$spaces$key:');
+        _dump(value as Map, indent + 1, lines);
+      } else if (value is YamlList || value is List) {
+        lines.add('$spaces$key:');
+        _dump(value as List, indent + 1, lines);
       } else if (value != null) {
         lines.add('$spaces$key:');
-        _dump(value, indent + 1, lines);
+        _dump(value.toList(), indent + 1, lines);
       }
     }
   }
@@ -92,7 +108,7 @@ abstract class YamlFile extends EditableFile {
 ================================================================
 ================================================================
 ================================================================
-==== $_filename 
+==== $_path/$_filename 
 ================================================================
 ================================================================
 ================================================================
@@ -103,12 +119,12 @@ ${lines.join('  \n')}
   ///
   /// Write doc to file specified by fullpath
   ///
-  writeYaml([String? fullpath, backup = true]) {
+  Future<void> writeYaml([String? fullpath, backup = true]) async {
     lines.clear();
     _dump(doc, 0, lines);
     lines.add('');
     final fn = fullpath ?? '$_path/$_filename';
-    print("writeYaml($fn) ${lines.join('\n')}");
+/*    print("writeYaml($fn) ${lines.join('\n')}");*/
     write(fn, backup);
   }
 }
